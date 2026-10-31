@@ -1,0 +1,68 @@
+---
+title: "Your ASR already knows when you're done talking"
+description: A small head on layer 11 of Voxtral Realtime's decoder predicts the end of your turn, with no loss in WER.
+date: 2026-11-01T08:37:00Z
+author: danil_rootint
+sources:
+  - id: voxtral-realtime
+    title: Voxtral Realtime
+    authors: Liu et al.
+    year: 2026
+    venue: arXiv:2602.11298
+    url: https://arxiv.org/abs/2602.11298
+  - id: dsm
+    title: Streaming Sequence-to-Sequence Learning with Delayed Streams Modeling
+    authors: Zeghidour et al.
+    year: 2025
+    venue: arXiv:2509.08753
+    url: https://arxiv.org/abs/2509.08753
+---
+
+<script>
+  import Cite from '#lib/post/Cite.svelte';
+  import TimeoutDemo from './TimeoutDemo.svelte';
+</script>
+
+## Why turn-taking is important
+
+Voxtral Realtime is a 4B-parameter model trained end-to-end for streaming speech recognition, and at a 480&nbsp;ms delay it is competitive with the leading realtime transcription APIs.<Cite id="voxtral-realtime" note="At a 480 ms delay it's on par with Scribe v2 Realtime and Whisper; at 960 ms it matches or beats offline models such as Voxtral Mini Transcribe V2. TEST, a deliberately long note: it is a 4B-parameter model that supports 13 languages, ships under Apache 2.0, and is trained for streaming from the start rather than adapted from an offline model with chunking." />
+
+Voxtral Realtime builds on Delayed Streams Modeling.<Cite id="dsm" note="TEST: placed right under a long note, so it has to move down to clear it." /> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+
+## Why everything sucks
+
+Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
+
+Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur. Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.
+
+![Two histograms of reply latency: the turn head clusters around 230 ms, a silence timer around 720 ms](sample-latency.png "Reply latency over 4,000 turns. Pink: the turn head. Grey: a 700 ms silence timer. Sample data.")
+
+At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
+
+## Why turn-taking sucks
+
+Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.
+
+Drag the timeout and watch where a silence timer answers compared with the turn head:
+
+<TimeoutDemo />
+
+Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.
+
+## Fixing gaps
+
+Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.
+
+![Spectrogram of two spoken phrases separated by a pause, with a dashed line where the turn ends](sample-spectrogram.jpg "Two phrases with a breath between them. The dashed line is where the head calls the turn; the pause in the middle doesn't fool it. Sample image.")
+
+Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+
+Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+## Deployment
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+
+Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
