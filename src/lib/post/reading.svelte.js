@@ -13,6 +13,8 @@ export class Reading {
 	/** @type {{ id: string, text: string }[]} */
 	sections = $state([]);
 	active = $state(0);
+	/** whether the reading line has reached the first heading yet */
+	started = $state(false);
 	/** how far through the current section the reading line is, 0 to 1 */
 	progress = $state(0);
 
@@ -56,6 +58,7 @@ export class Reading {
 		const from = tops[current];
 		const to = tops[current + 1] ?? end;
 		const atEnd = innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
+		this.started = atEnd || tops[0] <= line;
 		this.active = atEnd ? h.length - 1 : current;
 		this.progress = atEnd ? 1 : Math.min(1, Math.max(0, (line - from) / (to - from)));
 	}

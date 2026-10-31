@@ -1,4 +1,5 @@
-<!-- Bottom-centre stack for toast() messages; mounted once in the root layout. -->
+<!-- Bottom-centre stack for toast() messages; mounted once in the root layout. On a phone it keeps
+     to the lane between the round buttons in the bottom corners (back to top, contents). -->
 <script>
 	import { flip } from 'svelte/animate';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -32,7 +33,9 @@
 		flex-direction: column;
 		align-items: center;
 		gap: var(--s2);
-		width: min(100vw - 2 * var(--s4), 26rem);
+		/* clear of a 48px corner button plus a 12px gap on each side, the same both ways so the
+		   toast stays centred: 222px on a 390px phone */
+		width: min(100vw - 2 * (var(--s5) + 48px + var(--s3)), 26rem);
 		translate: -50% 0;
 		pointer-events: none;
 	}

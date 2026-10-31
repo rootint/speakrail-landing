@@ -1,3 +1,11 @@
-# allow crawling everything by default
+# Everyone, AI crawlers included, may crawl the site. A map for language models is at /llms.txt.
 User-agent: *
-Disallow:
+Allow: /
+
+# design and test pages, and the /ru copies (English duplicates until there is a translation)
+Disallow: /voxtral-test$
+Disallow: /voxtral-variants$
+Disallow: /brand$
+Disallow: /logos$
+Disallow: /ru$
+Disallow: /ru/

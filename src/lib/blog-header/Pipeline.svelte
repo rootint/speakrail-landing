@@ -495,6 +495,9 @@
 	.band {
 		width: 100vw;
 		margin-inline: calc(50% - 50vw);
+		/* the post column slides left on tablets (--shift in Post.svelte); slide back so this still
+		   spans the window */
+		translate: calc(-1 * var(--shift, 0px)) 0;
 		overflow-x: auto;
 		scrollbar-width: none;
 		mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);

@@ -93,8 +93,8 @@
 		text-decoration: none;
 	}
 	a {
-		/* dimmer than --muted so the white fill reads against it */
-		color: var(--chart-grey);
+		/* dimmer than --muted so the white fill reads against it, but above the 4.5:1 text minimum */
+		color: var(--dim);
 		transition: color var(--dur);
 	}
 	a:hover {
@@ -106,7 +106,7 @@
 		font-family: var(--font-mono);
 	}
 	a .n {
-		color: var(--chart-grey);
+		color: var(--dim);
 	}
 
 	/* the fill: a white copy with a pink number over each entry, clipped to how much is read.

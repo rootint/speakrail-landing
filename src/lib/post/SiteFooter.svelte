@@ -50,8 +50,9 @@
 	.home {
 		display: flex;
 	}
+	/* the same grey as "rail" in the logo beside it: 5.8:1, above the 4.5:1 text minimum */
 	.year {
 		font-family: var(--font-mono);
-		color: var(--chart-grey);
+		color: var(--dim);
 	}
 </style>

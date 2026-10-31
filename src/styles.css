@@ -101,6 +101,7 @@
 	--grid: #373133; /* 1.44 / 1.25 — gridlines, row rules (decorative) */
 	--border: #474243; /* 1.86 / 1.61 — hairlines, dividers (decorative) */
 	--chart-grey: #736c6e; /* 3.58 / 3.11 — control borders, baseline bars */
+	--dim: #959091; /* 5.83 / 5.06 — quiet text that must still read: contents, the footer year */
 	--muted: #b1abac; /* 8.12 / 7.04 — captions, secondary text, comments */
 	--body: #e9e3e4; /* 14.5 / 12.6 — paragraph text */
 	--text: #fcf5f7; /* 17.1 / 14.8 — headings, UI text (seed) */

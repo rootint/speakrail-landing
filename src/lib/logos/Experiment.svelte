@@ -248,9 +248,10 @@
 		font-weight: var(--wm-weight, 460);
 		letter-spacing: var(--wm-tracking, 0.015em);
 	}
-	/* mixed rather than faded, so the pink underline in 41 stays full strength */
+	/* mixed rather than faded, so the pink underline in 41 stays full strength; 55% is 5.8:1 on the
+	   page, clear of the 4.5:1 text minimum while still reading as the quieter half */
 	.ghost {
-		color: color-mix(in srgb, var(--fg) 45%, var(--bg));
+		color: color-mix(in srgb, var(--fg) 55%, var(--bg));
 	}
 	.now {
 		text-decoration: underline var(--acc);

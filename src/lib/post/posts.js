@@ -1,14 +1,19 @@
-// Every post's slug, title and date, newest first: read from the frontmatter of src/posts/*/index.svx.
+// Every post's slug, title, date and description, newest first: read from the frontmatter of src/posts/*/index.svx.
 
-/** @typedef {{ slug: string, title: string, date: string }} PostSummary */
+/** @typedef {{ slug: string, title: string, date: string, description?: string }} PostSummary */
 
-const metas = /** @type {Record<string, { title: string, date: string }>} */ (
+const metas = /** @type {Record<string, { title: string, date: string, description?: string }>} */ (
 	import.meta.glob('/src/posts/*/index.svx', { eager: true, import: 'metadata' })
 );
 
 /** @type {PostSummary[]} */
 export const posts = Object.entries(metas)
-	.map(([path, m]) => ({ slug: path.split('/')[3], title: m.title, date: m.date }))
+	.map(([path, m]) => ({
+		slug: path.split('/')[3],
+		title: m.title,
+		date: m.date,
+		description: m.description
+	}))
 	.sort((a, b) => +new Date(b.date) - +new Date(a.date));
 
 /**

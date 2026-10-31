@@ -4,6 +4,7 @@
 	import SiteFooter from '#lib/post/SiteFooter.svelte';
 	import SiteNav from '#lib/post/SiteNav.svelte';
 	import { posts } from '#lib/post/posts.js';
+	import { MISSION } from '#lib/site.js';
 
 	const day = (/** @type {string} */ d) =>
 		new Date(d).toLocaleDateString('en-US', {
@@ -22,11 +23,7 @@
 	<SiteNav />
 
 	<main class="home">
-		<p class="mission">
-			We are building local speech-to-speech pipelines to benefit humanity. We believe that
-			voice-first communications are the next step in computer usage and we do our best to make sure
-			that you will never need to touch a keyboard again.
-		</p>
+		<p class="mission">{MISSION}</p>
 
 		<section class="blog" aria-labelledby="blog-title">
 			<h2 id="blog-title">Blog</h2>

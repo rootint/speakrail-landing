@@ -2,12 +2,15 @@
      markdown body with the contents on the left, margin notes on the right and the sources at the end.
      `metadata` is the post's frontmatter (see src/posts/README.md). -->
 <script>
-	import { setContext } from 'svelte';
+	import { onMount, setContext } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
 	import NavArrowLeft from '~icons/iconoir/nav-arrow-left';
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
 	import ArrowUp from '~icons/iconoir/arrow-up';
+	import List from '~icons/iconoir/list';
 	import XLogo from '~icons/iconoir/x';
+	import CiteSheet from './CiteSheet.svelte';
 	import Outline from './Outline.svelte';
 	import RepoCta from './RepoCta.svelte';
 	import { Reading } from './reading.svelte.js';
@@ -15,6 +18,11 @@
 	import SiteNav from './SiteNav.svelte';
 	import SourceNotes from './SourceNotes.svelte';
 	import { defineSources } from './sources.js';
+	import TocBar from './toc/TocBar.svelte';
+	import TocFab from './toc/TocFab.svelte';
+	import TocInline from './toc/TocInline.svelte';
+	import TocPicker from './toc/TocPicker.svelte';
+	import TocTopBar from './toc/TocTopBar.svelte';
 
 	/**
 	 * @typedef {{
@@ -33,7 +41,15 @@
 	// read once: a post's frontmatter doesn't change while it's on screen
 	const { title, description, date, author } = metadata;
 	const sources = defineSources(metadata.sources ?? []);
-	setContext('post', { slug, sources });
+	// narrow screens show a citation's source in a bottom sheet instead of the margin
+	/** @type {CiteSheet | undefined} */
+	let sheet = $state();
+	setContext('post', {
+		slug,
+		sources,
+		showSource: (/** @type {import('./sources.js').Source} */ s, /** @type {string} */ note) =>
+			sheet?.show(s, note)
+	});
 
 	const reading = new Reading('article h2');
 
@@ -62,8 +78,35 @@
 	}
 	function toTop() {
 		const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (backToContents) {
+			document.getElementById('contents')?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+			return;
+		}
 		scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
 	}
+
+	// narrow screens have no contents rail; TEMP: five ways to bring the contents back there, picked
+	// with TocPicker at the top of the post and remembered on this device. Drop the losers.
+	const narrow = new MediaQuery('max-width: 76rem');
+	let toc = $state(1);
+	let navPinned = $state(false);
+	// option 5 puts the contents in the page, so back-to-top goes back to them instead
+	const backToContents = $derived(toc === 5 && narrow.current);
+	onMount(() => {
+		try {
+			const saved = Number(localStorage.getItem('toc-option'));
+			if (saved >= 1 && saved <= 5) toc = saved;
+		} catch {
+			// storage blocked: start on option 1
+		}
+	});
+	$effect(() => {
+		try {
+			localStorage.setItem('toc-option', String(toc));
+		} catch {
+			// storage blocked: the pick lasts until reload
+		}
+	});
 </script>
 
 <svelte:window onscroll={measureProgress} onresize={measureProgress} />
@@ -82,14 +125,17 @@
 	class:shown={deep}
 	style:--lift="{lift}px"
 	tabindex={deep ? 0 : -1}
-	aria-label="Back to top"
+	aria-label={backToContents ? 'Back to contents' : 'Back to top'}
 	data-jump
-	onclick={toTop}><ArrowUp /></button
+	onclick={toTop}
+	>{#if backToContents}<List />{:else}<ArrowUp />{/if}</button
 >
 
-<SiteNav />
+<SiteNav bind:pinned={navPinned} />
 
 <main class="post">
+	<TocPicker bind:value={toc} />
+
 	<header>
 		<p class="eyebrow">
 			<time datetime={when.toISOString()}
@@ -109,6 +155,8 @@
 	{#if Top}
 		<div class="top"><Top /></div>
 	{/if}
+
+	{#if toc === 5}<TocInline {reading} />{/if}
 
 	<div class="body">
 		<!-- the contents pin 24px below where the nav sits, so they stay put when it slides in -->
@@ -158,6 +206,18 @@
 
 <SiteFooter />
 
+<CiteSheet bind:this={sheet} />
+
+{#if toc === 1}
+	<TocBar {reading} shown={navPinned} {lift} />
+{:else if toc === 2}
+	<TocTopBar {reading} mode="nav" {navPinned} />
+{:else if toc === 3}
+	<TocFab {reading} {lift} />
+{:else if toc === 4}
+	<TocTopBar {reading} mode="sticky" {navPinned} />
+{/if}
+
 <style>
 	/* full-bleed figures (100vw) mustn't make the page scroll sideways */
 	:global(html) {
@@ -185,8 +245,8 @@
 		z-index: 9; /* over the edge tint (5), under the nav (10) */
 		display: grid;
 		place-items: center;
-		width: 44px;
-		height: 44px;
+		width: 48px; /* the same as the contents button in the other corner */
+		height: 48px;
 		padding: 0;
 		border: 0;
 		border-radius: 50%;
@@ -209,9 +269,13 @@
 		pointer-events: auto;
 		translate: 0 0;
 	}
-	.to-top:hover {
-		color: var(--text);
-		background: var(--surface-3);
+	/* real hover only: on a touch screen :hover sticks to the last thing tapped, so the button would
+	   stay lit after a tap and go dark again on the next tap elsewhere */
+	@media (hover: hover) {
+		.to-top:hover {
+			color: var(--text);
+			background: var(--surface-3);
+		}
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.to-top {
@@ -219,11 +283,36 @@
 		}
 	}
 
+	/* registered so it animates, and so full-bleed children inherit each in-between value */
+	@property --shift {
+		syntax: '<length>';
+		inherits: true;
+		initial-value: 0px;
+	}
+
 	/* 696px = the 12-column Figma grid (36px columns, 24px gutters) */
 	.post {
 		width: min(100% - 2 * var(--gutter), 43.5rem);
 		margin-inline: auto;
 		padding-block: var(--s8) var(--s9); /* + the 64px nav = 128px above the eyebrow */
+		/* centred, but slid left by --shift on tablets; full-bleed children slide back by the same */
+		translate: var(--shift) 0;
+		transition: --shift 400ms cubic-bezier(0.2, 0, 0, 1);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.post {
+			transition: none;
+		}
+	}
+	/* tablets: no contents, but the notes stay beside the text. The column narrows if it has to so
+	   column + gap + notes fit between the gutters, and slides left so the three sit centred as a
+	   group, ending on the left gutter */
+	@media (min-width: 48.0625rem) and (max-width: 76rem) {
+		.post {
+			--rail: clamp(11rem, 100vw - 43.5rem - var(--s8) - 2 * var(--gutter), 15rem);
+			--shift: calc((var(--s8) + var(--rail)) / -2);
+			width: min(43.5rem, 100% - 2 * var(--gutter) - var(--s8) - var(--rail));
+		}
 	}
 
 	/* ---------- header ---------- */
@@ -300,8 +389,9 @@
 		bottom: 0;
 		z-index: 8; /* above the edge tints (5) so they stay crisp, under the nav (10) */
 	}
-	/* each rail takes what the margin has room for (minus the gap and the page gutter), up to its
-	   max; both hide together once that drops under 11rem */
+	/* desktop: each rail takes what the margin has room for (minus the gap and the page gutter), up
+	   to its max. Under 76rem the contents go and the notes take the room the column slid away from;
+	   under 48rem (phones) the notes go too, and the numbers open a bottom sheet instead */
 	.rail.left {
 		right: calc(100% + var(--s8));
 		width: clamp(11rem, (100vw - 100%) / 2 - var(--s8) - var(--gutter), 13rem);
@@ -311,7 +401,15 @@
 		width: clamp(11rem, (100vw - 100%) / 2 - var(--s8) - var(--gutter), 15rem);
 	}
 	@media (max-width: 76rem) {
-		.rail {
+		.rail.left {
+			display: none;
+		}
+		.rail.right {
+			width: var(--rail);
+		}
+	}
+	@media (max-width: 48rem) {
+		.rail.right {
 			display: none;
 		}
 	}
@@ -322,8 +420,9 @@
 	}
 	.prose :global(h2) {
 		margin-bottom: var(--s6);
-		/* a jump from the contents lands the heading clear of the nav */
-		scroll-margin-top: calc(64px + var(--s6));
+		/* a jump from the contents lands the heading clear of the nav, at the same 88px the contents
+		   pin at (NAV_H + 24), so jumping to the first section doesn't leave them 8px low */
+		scroll-margin-top: calc(64px + var(--s5));
 	}
 	.prose :global(figure) {
 		margin-block: var(--s6);

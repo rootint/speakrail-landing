@@ -5,9 +5,12 @@
 	import { resolve } from '$app/paths';
 	import Experiment from '#lib/logos/Experiment.svelte';
 
+	/** `pinned`: the nav has slid back in on a scroll up; bind it to show things alongside the nav */
+	/** @type {{ pinned?: boolean }} */
+	let { pinned = $bindable(false) } = $props();
+
 	const NAV_H = 64;
 	let off = $state(0); // how far the unpinned nav has scrolled off, 0 to NAV_H
-	let pinned = $state(false);
 	let lastY = 0;
 
 	// a jump scrolls too, but that isn't the reader asking for the nav: hold it until the jump settles.

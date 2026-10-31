@@ -1,8 +1,9 @@
 <!-- mdsvex layout for every post body: it swaps markdown's plain elements for our own.
-     Right now that's images, which become figures with the title as the caption. -->
+     Images become figures with the title as the caption; ## headings copy a link to themselves. -->
 <script context="module">
 	import Figure from './Figure.svelte';
-	export { Figure as img };
+	import Heading from './Heading.svelte';
+	export { Figure as img, Heading as h2 };
 </script>
 
 <script>
