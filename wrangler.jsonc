@@ -1,0 +1,9 @@
+// Cloudflare deploy: the site is fully prerendered (adapter-static), so this only uploads build/
+// as static assets. No Worker script runs.
+{
+	"name": "speakrail-landing",
+	"compatibility_date": "2026-10-31",
+	"assets": {
+		"directory": "./build"
+	}
+}
