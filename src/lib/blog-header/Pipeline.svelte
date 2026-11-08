@@ -178,8 +178,23 @@
 		let seed = 7;
 		const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
+		// the canvases can't use CSS variables, so read the theme's colours (again on a switch)
+		let colors = { bg: '', wave: '', loud: '', quiet: '' };
+		const readColors = () => {
+			const cs = getComputedStyle(document.documentElement);
+			const token = (/** @type {string} */ name) => cs.getPropertyValue(name).trim();
+			colors = {
+				bg: token('--surface-1'),
+				wave: token('--chart-grey'),
+				loud: token('--text'),
+				quiet: token('--accent')
+			};
+		};
+		readColors();
+
 		// one spectrogram column per tick, kept until the next tick so 1px scroll steps reuse it
-		/** @type {(string | null)[]} */
+		// energy per bin, null where it's too quiet to draw
+		/** @type {(number | null)[]} */
 		let column = [];
 		let columnTick = NaN;
 		const columnAt = (/** @type {number} */ t) => {
@@ -198,8 +213,7 @@
 							0.25 * rand());
 				}
 				e = Math.min(1, e);
-				if (e < 0.04) return null;
-				return e > 0.75 ? `rgb(252 245 247 / ${e})` : `rgb(245 158 185 / ${e})`;
+				return e < 0.04 ? null : e;
 			});
 			return column;
 		};
@@ -207,20 +221,23 @@
 		// shift right by 1px and paint the newest strip on the left (the encoder side)
 		const shiftSpec = (/** @type {number} */ now) => {
 			sctx.drawImage(spec, 0, 0, (GAP.w - 1) * dpr, GAP.h * dpr, 1, 0, GAP.w - 1, GAP.h);
-			sctx.fillStyle = '#1f1c1d';
+			sctx.fillStyle = colors.bg;
 			sctx.fillRect(0, 0, 1, GAP.h);
 			const bh = GAP.h / BINS;
-			columnAt(Math.floor(now - ENC_OUT)).forEach((fill, b) => {
-				if (!fill) return;
-				sctx.fillStyle = fill;
+			// the loudest bins in the text colour, the rest pink, each as strong as its energy
+			columnAt(Math.floor(now - ENC_OUT)).forEach((e, b) => {
+				if (e === null) return;
+				sctx.globalAlpha = e;
+				sctx.fillStyle = e > 0.75 ? colors.loud : colors.quiet;
 				sctx.fillRect(0, GAP.h - (b + 1) * bh, 1, bh - 1);
 			});
+			sctx.globalAlpha = 1;
 		};
 
 		// each bar is one sample time, so bars glide right instead of re-sampling in place
 		const drawWave = (/** @type {number} */ now) => {
 			wctx.clearRect(0, 0, WAVE.w, WAVE.h);
-			wctx.fillStyle = '#736c6e';
+			wctx.fillStyle = colors.wave;
 			for (let t = Math.ceil(now - TO_ENCODER); t <= now; t++) {
 				if (t % 2) continue;
 				const x = (now - t) * PX;
@@ -255,24 +272,35 @@
 		};
 
 		const reset = () => {
-			sctx.fillStyle = '#1f1c1d';
+			sctx.fillStyle = colors.bg;
 			sctx.fillRect(0, 0, GAP.w, GAP.h);
 			columnTick = NaN;
 			seed = 7;
 		};
 
+		let now = START;
+		// the whole spectrogram as it stands at `now`, painted from scratch
+		const repaint = () => {
+			reset();
+			for (let x = 0; x < GAP.w; x++) shiftSpec(now - (GAP.w - x) / PX);
+			drawWave(now);
+		};
+		// a theme switch: the same picture in the new colours
+		const themeWatch = new MutationObserver(() => {
+			readColors();
+			repaint();
+		});
+		themeWatch.observe(document.documentElement, { attributeFilter: ['data-theme'] });
+
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 			// static frame: speech in the spectrogram, the full sentence out, the head fired
 			still = true;
-			reset();
-			const now = 200;
-			for (let x = 0; x < GAP.w; x++) shiftSpec(now - (GAP.w - x) / PX);
-			drawWave(now);
-			return;
+			now = 200;
+			repaint();
+			return () => themeWatch.disconnect();
 		}
 
 		let raf = 0;
-		let now = START;
 		let shifted = 0; // whole px the spectrogram has scrolled
 		let t0 = 0;
 		let last = 0;
@@ -309,7 +337,10 @@
 			raf = requestAnimationFrame(tick);
 		};
 		replay();
-		return () => cancelAnimationFrame(raf);
+		return () => {
+			cancelAnimationFrame(raf);
+			themeWatch.disconnect();
+		};
 	});
 </script>
 
@@ -564,7 +595,7 @@
 		border: 0;
 		border-radius: 999px;
 		background: none;
-		box-shadow: inset 0 0 0 1px rgb(252 245 247 / 0.16);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
 		font: var(--w-ui-strong) var(--fs-small) / 1 var(--font-ui);
 		color: var(--body);
 		cursor: pointer;
@@ -651,14 +682,14 @@
 		}
 	}
 	.enc-net line {
-		stroke: rgb(245 158 185);
+		stroke: var(--accent);
 	}
 	.enc-net circle {
-		fill: rgb(245 158 185);
+		fill: var(--accent);
 	}
 	.dec-net line,
 	.head-net line {
-		stroke: rgb(252 245 247);
+		stroke: var(--text);
 	}
 	.dec-net circle,
 	.head-net circle {
@@ -666,7 +697,7 @@
 	}
 	.dec-net circle.tap {
 		fill: var(--accent);
-		filter: drop-shadow(0 0 4px rgb(245 158 185 / 0.9));
+		filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 90%, transparent));
 	}
 	.out-node {
 		fill: var(--surface-4);
@@ -676,7 +707,7 @@
 	.out-node.hot {
 		fill: var(--accent);
 		stroke: var(--accent);
-		filter: drop-shadow(0 0 6px rgb(245 158 185 / 0.9));
+		filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 90%, transparent));
 	}
 
 	.flow {
@@ -696,7 +727,7 @@
 
 	.head {
 		fill: var(--surface-1);
-		stroke: rgb(245 158 185 / 0.45);
+		stroke: color-mix(in srgb, var(--accent) 45%, transparent);
 	}
 	.track {
 		fill: var(--surface-4);

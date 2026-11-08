@@ -13,7 +13,9 @@
 			Clone it, run the whole pipeline on your own machine, and star it if it's useful.
 		</p>
 	</div>
-	<a class="repo-go" href={REPO}><Github /> Star on GitHub <ArrowUpRight /></a>
+	<a class="repo-go" href={REPO} target="_blank" rel="noreferrer"
+		><Github /> Star on GitHub <ArrowUpRight /></a
+	>
 </aside>
 
 <style>

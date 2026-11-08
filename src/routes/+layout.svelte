@@ -9,7 +9,23 @@
 	import '../styles.css';
 
 	let { children } = $props();
+
+	// SvelteKit turns the browser's own scroll restoring off and, on a reload, scrolls back itself once
+	// its script has run, so the page first paints at the top and then jumps. Handing it back to the
+	// browser on the way out lets a reload open where it was left (SvelteKit 2 did this; 3 dropped it).
+	function onbeforeunload() {
+		history.scrollRestoration = 'auto';
+	}
+	// ...but a page that comes back from the back/forward cache doesn't start over, so nothing turns it
+	// off again, and the browser would then fight SvelteKit over scroll on in-site back and forward.
+	// That's why 3 dropped it (sveltejs/kit#17244); taking it back here keeps both.
+	/** @param {PageTransitionEvent} e */
+	function onpageshow(e) {
+		if (e.persisted) history.scrollRestoration = 'manual';
+	}
 </script>
+
+<svelte:window {onbeforeunload} {onpageshow} />
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
@@ -54,5 +70,9 @@
 	.bottom {
 		bottom: 0;
 		background: linear-gradient(to top, var(--fade));
+	}
+	/* dark mode only: on a light page the fades just read as a grey haze over the text */
+	:global([data-theme='light']) .edge {
+		display: none;
 	}
 </style>

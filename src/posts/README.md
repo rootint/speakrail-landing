@@ -18,6 +18,9 @@ title: "Your ASR already knows when you're done talking"
 description: One sentence for search results and link previews.
 date: 2026-11-01T08:37:00Z # shown as "Nov 1, 2026", the time slides out on hover (UTC)
 author: danil_rootint # X handle, shown as @danil_rootint and linked
+tldr: >- # optional; the TL;DR box, if the post's Top.svelte shows one. '>-' joins the lines into one paragraph
+  One or two sentences
+  that can wrap over several lines here.
 sources: # optional; numbered 1, 2, 3... in this order
   - id: voxtral-realtime
     title: Voxtral Realtime
@@ -29,6 +32,8 @@ sources: # optional; numbered 1, 2, 3... in this order
 ```
 
 Quote the title if it has a colon or starts with a quote mark.
+
+Add `draft: true` to keep a post out of the site while it's unfinished: it gets no page and isn't in the blog list, the previous/next links or `llms.txt`. Delete the line to publish.
 
 ## Body
 

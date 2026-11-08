@@ -1,4 +1,5 @@
 <script>
+	import '#lib/temp-kit.css';
 	import Experiment from '#lib/logos/Experiment.svelte';
 	import Lockup from '#lib/logos/Lockup.svelte';
 	import Mark from '#lib/logos/Mark.svelte';

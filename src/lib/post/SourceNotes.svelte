@@ -3,6 +3,7 @@
      down instead. Positions are measured after mount and again whenever the layout changes. -->
 <script>
 	import { onMount, tick } from 'svelte';
+	import { sourceMeta } from './sources.js';
 
 	/** @type {{ sources: Record<string, import('./sources.js').Source>, root?: string }} */
 	let { sources, root = 'article' } = $props();
@@ -61,11 +62,14 @@
 			<span class="n">{c.source.n}</span>
 			<div>
 				{#if c.note}<p class="text"><span class="baseline"></span>{c.note}</p>{/if}
+				<!-- with no note, the baseline probe goes inside the link: on its own before it, the
+				     line break between them would indent the title by a space -->
 				<p class="ref">
-					{#if !c.note}<span class="baseline"></span>{/if}
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
-					<a href={c.source.url}>{c.source.title}</a>
-					<span class="src-meta">{c.source.authors}, {c.source.year} · {c.source.venue}</span>
+					<a href={c.source.url} target="_blank" rel="noreferrer"
+						>{#if !c.note}<span class="baseline"></span>{/if}{c.source.title}</a
+					>
+					<span class="src-meta">{sourceMeta(c.source)}</span>
 				</p>
 			</div>
 		</li>

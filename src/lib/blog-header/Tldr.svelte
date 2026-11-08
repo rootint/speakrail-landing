@@ -1,13 +1,16 @@
-<!-- 14 · TL;DR as a pull quote: pink rule on the left (same as .prose blockquote), pink label, plain body text -->
-<aside class="tldr" aria-label="TL;DR">
-	<p class="label">TL;DR</p>
-	<p>
-		You can achieve great turn-taking without losing WER on Voxtral Realtime by just attaching a
-		turn head to layer 11 of the model’s decoder. The weights are available on Hugging Face,
-		benchmarks are there as well. To try the model in real life, try using Speakrail, it will most
-		likely launch on your hardware.
-	</p>
-</aside>
+<!-- 14 · TL;DR as a pull quote: pink rule on the left (same as .prose blockquote), pink label, plain
+     body text. The text comes from the post's frontmatter (`tldr:`); without it, nothing renders. -->
+<script>
+	/** @type {{ text?: string }} */
+	let { text = '' } = $props();
+</script>
+
+{#if text}
+	<aside class="tldr" aria-label="TL;DR">
+		<p class="label">TL;DR</p>
+		<p>{text}</p>
+	</aside>
+{/if}
 
 <style>
 	.tldr {

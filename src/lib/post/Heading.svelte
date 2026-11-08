@@ -1,19 +1,20 @@
 <!-- A section heading in a post body (markdown's ##). Clicking or tapping it copies a link to the
      section. With a mouse, a pink copy mark appears on hover and turns into a tick on click. Touch
-     screens have no hover to reveal the mark, so a tap says "Title copied!" in a toast instead. -->
+     screens have no hover to reveal the mark, so a tap says "Title copied!" in a toast instead.
+     The heading text sits in a real #link, not a button: reader modes drop buttons and everything in
+     them, and a link still works when opened in a new tab or without JavaScript. -->
 <script>
 	import Check from '~icons/iconoir/check';
 	import Copy from '~icons/iconoir/copy';
 	import Link from '~icons/iconoir/link';
 	import { toast } from '#lib/toast/toasts.svelte.js';
 
-	/** @type {{ children?: import('svelte').Snippet }} */
-	let { children } = $props();
+	// the id comes from the build (remark-headings.js)
+	/** @type {{ id?: string, children?: import('svelte').Snippet }} */
+	let { id, children } = $props();
 
-	/** @type {HTMLHeadingElement | undefined} */
-	let heading = $state();
-	/** @type {HTMLButtonElement | undefined} */
-	let button = $state();
+	/** @type {HTMLAnchorElement | undefined} */
+	let link = $state();
 	let copied = $state(false); // holds the mark up after a copy
 	let tick = $state(false); // which icon; outlasts `copied` so the mark fades out as a tick
 	/** @type {ReturnType<typeof setTimeout> | undefined} */
@@ -23,11 +24,14 @@
 	const FADE = 200; // a little over the mark's --dur fade-out
 
 	const canHover = () => matchMedia('(hover: hover)').matches;
-	const hovering = () => canHover() && !!button?.matches(':hover');
+	const hovering = () => canHover() && !!link?.matches(':hover');
 
-	async function copy() {
-		// the id is given on mount by the post's Reading, from the heading text
-		const url = `${location.origin}${location.pathname}#${heading?.id ?? ''}`;
+	/** @param {MouseEvent} e */
+	async function copy(e) {
+		// a click with a modifier (new tab, new window) is the link doing its own thing
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		const url = `${location.origin}${location.pathname}#${id ?? ''}`;
 		try {
 			await navigator.clipboard.writeText(url);
 		} catch {
@@ -61,35 +65,28 @@
 	}
 </script>
 
-<h2 bind:this={heading}>
+<h2 {id}>
 	<!-- described rather than labelled: a label would replace the heading's own text for screen
 	     readers, and extra text inside would end up in the contents and the section id -->
-	<button
-		type="button"
+	<a
+		href="#{id}"
 		class="copy-link"
 		class:copied
-		bind:this={button}
+		bind:this={link}
 		{onpointerenter}
 		aria-description="Copies a link to this section"
 		onclick={copy}
 		>{@render children?.()}<span class="mark" aria-hidden="true"
 			>{#if tick}<Check />{:else}<Copy />{/if}</span
-		></button
+		></a
 	>
 </h2>
 
 <style>
-	/* the whole heading is the button, looking exactly like the heading */
+	/* the whole heading is the link, looking exactly like the heading */
 	.copy-link {
-		display: inline;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
 		color: inherit;
-		text-align: inherit;
-		text-wrap: inherit;
-		cursor: pointer;
+		text-decoration: none;
 	}
 	.mark {
 		display: inline-flex;

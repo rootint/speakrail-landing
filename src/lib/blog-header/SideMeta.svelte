@@ -21,10 +21,17 @@
 	</aside>
 
 	<div class="cta">
-		<a class="big" href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead">
+		<a
+			class="big"
+			href="https://huggingface.co/speakrail/speakrail-voxtral-realtime-2602-turnhead-2611"
+			target="_blank"
+			rel="noreferrer"
+		>
 			Read the model card <ArrowUpRight />
 		</a>
-		<a class="quiet" href="https://github.com/speakrail/speakrail"><Github /> View code</a>
+		<a class="quiet" href="https://github.com/speakrail/speakrail" target="_blank" rel="noreferrer"
+			><Github /> View code</a
+		>
 	</div>
 </div>
 

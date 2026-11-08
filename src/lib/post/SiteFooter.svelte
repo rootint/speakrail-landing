@@ -2,19 +2,17 @@
      on the right, on the nav's 76rem column. -->
 <script>
 	import { resolve } from '$app/paths';
-	import Experiment from '#lib/logos/Experiment.svelte';
+	import Wordmark from '#lib/logos/Wordmark.svelte';
 </script>
 
 <footer class="foot">
 	<span class="left">
-		<a class="home" href={resolve('/')} aria-label="Speakrail home"
-			><Experiment id={41} size={15} /></a
-		>
+		<a class="home" href={resolve('/')} aria-label="Speakrail home"><Wordmark size={15} /></a>
 		<span class="year">© {new Date().getFullYear()}</span>
 	</span>
 	<span class="links">
-		<a href="https://huggingface.co/speakrail">Hugging Face</a>
-		<a href="https://github.com/speakrail/speakrail">GitHub</a>
+		<a href="https://huggingface.co/speakrail" target="_blank" rel="noreferrer">Hugging Face</a>
+		<a href="https://github.com/speakrail/speakrail" target="_blank" rel="noreferrer">GitHub</a>
 	</span>
 </footer>
 

@@ -1,7 +1,7 @@
-<!-- Option 3: a round button bottom-right, mirroring back-to-top on the left. It shows the section
-     number, ringed by how far through that section the reader is (the bar at the very top already
-     shows the whole post); tapping it opens the contents in a sheet. There from the first heading
-     on, whichever way the page scrolls. -->
+<!-- The contents below 76rem, where the contents rail is gone: a round button bottom-right,
+     mirroring back-to-top on the left. It shows the section number, ringed by how far through that
+     section the reader is (the bar at the very top already shows the whole post); tapping it opens
+     the contents in a sheet. There from the first heading on, whichever way the page scrolls. -->
 <script>
 	import TocSheet from './TocSheet.svelte';
 

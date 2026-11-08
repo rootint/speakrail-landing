@@ -1,4 +1,5 @@
 <script>
+	import '#lib/temp-kit.css';
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import ArrowUpRight from '~icons/iconoir/arrow-up-right';
@@ -22,6 +23,9 @@
 	import SideMeta from '#lib/blog-header/SideMeta.svelte';
 	import Spectrum from '#lib/blog-header/Spectrum.svelte';
 	import Tldr from '#lib/blog-header/Tldr.svelte';
+
+	const TLDR =
+		'You can achieve great turn-taking without losing WER on Voxtral Realtime by just attaching a turn head to layer 11 of the model’s decoder. The weights are available on Hugging Face, benchmarks are there as well. To try the model in real life, try using Speakrail, it will most likely launch on your hardware.';
 
 	const reading = new Reading('article h2');
 	const sources = defineSources([
@@ -160,8 +164,8 @@
 		style:--wm-tracking="{logo.tracking}em"><Experiment id={41} size={logo.size} /></a
 	>
 	<span class="links">
-		<a href="https://huggingface.co/speakrail">Hugging Face</a>
-		<a href="https://github.com/speakrail/speakrail">GitHub</a>
+		<a href="https://huggingface.co/speakrail" target="_blank" rel="noreferrer">Hugging Face</a>
+		<a href="https://github.com/speakrail/speakrail" target="_blank" rel="noreferrer">GitHub</a>
 	</span>
 </nav>
 
@@ -172,7 +176,7 @@
 				>Nov 1, 2026<span class="clock">&nbsp;at 8:37 UTC</span></time
 			>
 			by
-			<a class="handle" href="https://x.com/danil_rootint"
+			<a class="handle" href="https://x.com/danil_rootint" target="_blank" rel="noreferrer"
 				><span class="xlogo"><XLogo /></span>@danil_rootint</a
 			>
 		</p>
@@ -205,30 +209,45 @@
 					<a
 						class="btn primary"
 						href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
-						>{@render hfLogo(20)} Get the weights <ArrowUpRight /></a
+						target="_blank"
+						rel="noreferrer">{@render hfLogo(20)} Get the weights <ArrowUpRight /></a
 					>
 					<a
 						class="btn"
 						href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
-						><GraphUp /> Benchmarks</a
+						target="_blank"
+						rel="noreferrer"><GraphUp /> Benchmarks</a
 					>
-					<a class="btn" href="https://github.com/speakrail/speakrail"><Github /> GitHub</a>
+					<a
+						class="btn"
+						href="https://github.com/speakrail/speakrail"
+						target="_blank"
+						rel="noreferrer"><Github /> GitHub</a
+					>
 					<a class="btn" href={resolve('/')}><Play /> Try Speakrail</a>
 				</nav>
 			{:else if v === 3}
 				<!-- C · resource cards + contents -->
 				<nav class="resources" aria-label="Resources">
-					<a href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead">
+					<a
+						href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
+						target="_blank"
+						rel="noreferrer"
+					>
 						<span class="label">Weights <ArrowUpRight /></span>
 						<span class="title">Hugging Face</span>
 						<span class="sub">{repo}</span>
 					</a>
-					<a href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead">
+					<a
+						href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
+						target="_blank"
+						rel="noreferrer"
+					>
 						<span class="label">Results <ArrowUpRight /></span>
 						<span class="title">Benchmarks</span>
 						<span class="sub">WER + turn latency</span>
 					</a>
-					<a href="https://github.com/speakrail/speakrail">
+					<a href="https://github.com/speakrail/speakrail" target="_blank" rel="noreferrer">
 						<span class="label">Run it <ArrowUpRight /></span>
 						<span class="title">Speakrail</span>
 						<span class="sub">github.com/speakrail</span>
@@ -264,10 +283,10 @@
 			{:else if v === 14}
 				<CtaLinks />
 				<Pipeline />
-				<Tldr />
+				<Tldr text={TLDR} />
 			{:else if v === 15}
 				<CtaLinks />
-				<Tldr />
+				<Tldr text={TLDR} />
 			{/if}
 		</div>
 	{/if}
@@ -393,8 +412,12 @@
 				{#each Object.values(sources) as s (s.id)}
 					<li id="source-{s.id}">
 						<span class="bib-n">{s.n}</span>
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
-						<span>{s.authors} <a href={s.url}>{s.title}</a>. {s.venue}, {s.year}.</span>
+						<span
+							>{s.authors}
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
+							<a href={s.url} target="_blank" rel="noreferrer">{s.title}</a>. {s.venue},
+							{s.year}.</span
+						>
 					</li>
 				{/each}
 			</ol>

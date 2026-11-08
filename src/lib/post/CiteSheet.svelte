@@ -2,6 +2,7 @@
      show on wide ones. Opened with `show(source, note)`. -->
 <script>
 	import Sheet from './Sheet.svelte';
+	import { sourceMeta } from './sources.js';
 
 	/** @type {Sheet | undefined} */
 	let sheet = $state();
@@ -28,8 +29,8 @@
 				{#if note}<p class="sheet-note">{note}</p>{/if}
 				<p class="sheet-ref">
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
-					<a href={source.url}>{source.title}</a>
-					<span class="sheet-meta">{source.authors}, {source.year} · {source.venue}</span>
+					<a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+					<span class="sheet-meta">{sourceMeta(source)}</span>
 				</p>
 			</div>
 		</div>

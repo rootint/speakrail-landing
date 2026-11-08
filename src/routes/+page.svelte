@@ -3,8 +3,10 @@
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
 	import SiteFooter from '#lib/post/SiteFooter.svelte';
 	import SiteNav from '#lib/post/SiteNav.svelte';
-	import { posts } from '#lib/post/posts.js';
 	import { MISSION } from '#lib/site.js';
+
+	/** @type {{ data: { posts: import('#lib/post/posts.server.js').PostSummary[] } }} */
+	let { data } = $props();
 
 	const day = (/** @type {string} */ d) =>
 		new Date(d).toLocaleDateString('en-US', {
@@ -30,7 +32,7 @@
 			<p class="sub">Read our latest news</p>
 
 			<ol class="posts">
-				{#each posts as p (p.slug)}
+				{#each data.posts as p (p.slug)}
 					<li>
 						<a class="post-link" href={resolve('/[slug]', { slug: p.slug })}>
 							<span class="post-text">

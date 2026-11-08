@@ -39,10 +39,19 @@
 		translate: -50% 0;
 		pointer-events: none;
 	}
-	/* look comes from the global .toast; this only makes it a quiet, clickable button */
+	/* a pill on the overlay level, and a quiet, clickable button */
 	.toast {
+		display: flex;
+		align-items: center;
+		gap: var(--s3);
 		max-width: 100%;
+		padding: var(--s3) var(--s5) var(--s3) 20px; /* a touch less on the left, where the icon sits */
 		border: 0;
+		border-radius: 999px;
+		background: var(--surface-3);
+		box-shadow: var(--ring-3), var(--shadow-3);
+		font: var(--w-ui) var(--fs-small) / 1.5 var(--font-ui);
+		color: var(--body);
 		text-align: left;
 		cursor: pointer;
 		pointer-events: auto;

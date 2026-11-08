@@ -4,6 +4,7 @@ title: Running Voxtral Realtime on a single consumer GPU
 description: Placeholder post.
 date: 2026-10-14T10:00:00Z
 author: danil_rootint
+draft: true # a stub: no page, not listed. Delete this line to publish
 ---
 
 ## What fits in 24 GB

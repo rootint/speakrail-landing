@@ -1,6 +1,6 @@
-<!-- The post's sections as a list of tall, thumb-sized links, for the narrow-screen contents (a sheet
-     or a dropdown). The section being read is white with a pink number. `onpick` runs before the
-     jump, so a container can close itself first. -->
+<!-- The post's sections as a list of tall, thumb-sized links, for the narrow-screen contents sheet.
+     The section being read is white with a pink number. `onpick` runs before the jump, so the sheet
+     can close itself first. -->
 <script>
 	/** @type {{ reading: import('../reading.svelte.js').Reading, onpick?: () => void }} */
 	let { reading, onpick } = $props();

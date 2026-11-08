@@ -4,6 +4,7 @@ title: Measuring turn-taking latency without a stopwatch
 description: Placeholder post.
 date: 2026-09-30T10:00:00Z
 author: danil_rootint
+draft: true # a stub: no page, not listed. Delete this line to publish
 ---
 
 ## Where the time goes

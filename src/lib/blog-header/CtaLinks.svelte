@@ -10,7 +10,9 @@
 <div class="cta">
 	<a
 		class="big"
-		href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
+		href="https://huggingface.co/speakrail/speakrail-voxtral-realtime-2602-turnhead-2611"
+		target="_blank"
+		rel="noreferrer"
 		aria-label="Get it on Hugging Face"
 	>
 		Model card <HfLogo size="1.5em" />

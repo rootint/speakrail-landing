@@ -1,6 +1,7 @@
 <!-- TEMP: a skeuomorphic take on /voxtral — raised panels, glass, real keys, instruments, paper.
      All numbers on this page are illustrative. -->
 <script>
+	import '#lib/temp-kit.css';
 	import { resolve } from '$app/paths';
 	import ArrowUpRight from '~icons/iconoir/arrow-up-right';
 	import Page from '~icons/iconoir/page';
@@ -57,10 +58,15 @@
 	<nav class="glass" aria-label="Site">
 		<a class="home" href={resolve('/')}><Experiment id={41} size={18} /></a>
 		<span class="nav-keys">
-			<a class="key sm" href="https://huggingface.co/speakrail"
+			<a class="key sm" href="https://huggingface.co/speakrail" target="_blank" rel="noreferrer"
 				><HfLogo size="1.35em" /> Hugging Face</a
 			>
-			<a class="key sm" href="https://github.com/speakrail/speakrail">
+			<a
+				class="key sm"
+				href="https://github.com/speakrail/speakrail"
+				target="_blank"
+				rel="noreferrer"
+			>
 				<!-- GitHub's mark (Primer octicon mark-github) -->
 				<svg class="gh" viewBox="0 0 16 16" aria-hidden="true"
 					><path
@@ -77,16 +83,20 @@
 		<header class="col">
 			<p class="eyebrow">
 				<time datetime="2026-11-01T08:37Z">Nov 1, 2026</time> by
-				<a href="https://x.com/danil_rootint">@danil_rootint</a>
+				<a href="https://x.com/danil_rootint" target="_blank" rel="noreferrer">@danil_rootint</a>
 			</p>
 			<h1>Your ASR already knows when you're done talking</h1>
 			<div class="keys">
 				<a
 					class="key pink"
 					href="https://huggingface.co/speakrail/Voxtral-Mini-4B-Realtime-2602-TurnHead"
+					target="_blank"
+					rel="noreferrer"
 					aria-label="Get it on Hugging Face">Get on <HfLogo size="1.5em" /> <ArrowUpRight /></a
 				>
-				<a class="key" href="https://arxiv.org/"><Page /> Read on arXiv</a>
+				<a class="key" href="https://arxiv.org/" target="_blank" rel="noreferrer"
+					><Page /> Read on arXiv</a
+				>
 			</div>
 		</header>
 

@@ -6,7 +6,9 @@ import { getIconData, iconToHTML, iconToSVG } from '@iconify/utils';
 import { mdsvex } from 'mdsvex';
 import Icons from 'unplugin-icons/vite';
 import { defineConfig } from 'vite';
+import { remarkExternalLinks } from './src/lib/post/remark-external-links.js';
 import { remarkFigures } from './src/lib/post/remark-figures.js';
+import { remarkHeadings } from './src/lib/post/remark-headings.js';
 
 export default defineConfig({
 	plugins: [
@@ -17,7 +19,7 @@ export default defineConfig({
 				mdsvex({
 					extensions: ['.svx'],
 					layout: import.meta.dirname + '/src/lib/post/Markdown.svelte',
-					remarkPlugins: [remarkFigures]
+					remarkPlugins: [remarkFigures, remarkHeadings, remarkExternalLinks]
 				})
 			],
 			compilerOptions: {

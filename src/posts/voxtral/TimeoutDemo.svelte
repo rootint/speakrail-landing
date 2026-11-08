@@ -80,7 +80,7 @@
 		background: var(--muted);
 	}
 	.mark.timer.bad {
-		background: #ff7a6b;
+		background: var(--error);
 	}
 	.tag {
 		position: absolute;

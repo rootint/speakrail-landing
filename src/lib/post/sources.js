@@ -11,3 +11,10 @@
 export function defineSources(list) {
 	return Object.fromEntries(list.map((s, i) => [s.id, { ...s, n: i + 1 }]));
 }
+
+/**
+ * The short line under a source's title in the margin and the bottom sheet: just who and when. The
+ * venue is left to the link and to the full list at the end of the post.
+ * @param {SourceInput} s
+ */
+export const sourceMeta = (s) => `${s.authors}, ${s.year}`;

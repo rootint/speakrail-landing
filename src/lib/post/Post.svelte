@@ -3,12 +3,11 @@
      `metadata` is the post's frontmatter (see src/posts/README.md). -->
 <script>
 	import { onMount, setContext } from 'svelte';
-	import { MediaQuery } from 'svelte/reactivity';
+	import { on } from 'svelte/events';
 	import { resolve } from '$app/paths';
 	import NavArrowLeft from '~icons/iconoir/nav-arrow-left';
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
 	import ArrowUp from '~icons/iconoir/arrow-up';
-	import List from '~icons/iconoir/list';
 	import XLogo from '~icons/iconoir/x';
 	import CiteSheet from './CiteSheet.svelte';
 	import Outline from './Outline.svelte';
@@ -17,12 +16,10 @@
 	import SiteFooter from './SiteFooter.svelte';
 	import SiteNav from './SiteNav.svelte';
 	import SourceNotes from './SourceNotes.svelte';
+	import { onScrollFrame } from './scroll-frame.js';
 	import { defineSources } from './sources.js';
-	import TocBar from './toc/TocBar.svelte';
 	import TocFab from './toc/TocFab.svelte';
-	import TocInline from './toc/TocInline.svelte';
-	import TocPicker from './toc/TocPicker.svelte';
-	import TocTopBar from './toc/TocTopBar.svelte';
+	import { onUserScroll } from './user-scroll.js';
 
 	/**
 	 * @typedef {{
@@ -30,11 +27,12 @@
 	 *   description?: string,
 	 *   date: string,
 	 *   author?: string,
+	 *   tldr?: string,
 	 *   sources?: import('./sources.js').SourceInput[]
 	 * }} Metadata
 	 */
 
-	/** @typedef {import('./posts.js').PostSummary | null} Neighbour */
+	/** @typedef {import('./posts.server.js').PostSummary | null} Neighbour */
 	/** @type {{ slug: string, metadata: Metadata, Content: import('svelte').Component, Top?: import('svelte').Component | null, older?: Neighbour, newer?: Neighbour }} */
 	let { slug, metadata, Content, Top = null, older = null, newer = null } = $props();
 
@@ -69,51 +67,57 @@
 	// so it never sits on top of it
 	let deep = $state(false);
 	let lift = $state(0);
-	function measureProgress() {
-		const scrollable = document.documentElement.scrollHeight - innerHeight;
-		progress = scrollable > 0 ? Math.min(1, Math.max(0, scrollY / scrollable)) : 0;
-		deep = scrollY > innerHeight;
-		const foot = document.querySelector('footer.foot');
-		lift = foot ? Math.max(0, innerHeight - foot.getBoundingClientRect().top) : 0;
-	}
-	function toTop() {
-		const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-		if (backToContents) {
-			document.getElementById('contents')?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
-			return;
-		}
-		scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
-	}
-
-	// narrow screens have no contents rail; TEMP: five ways to bring the contents back there, picked
-	// with TocPicker at the top of the post and remembered on this device. Drop the losers.
-	const narrow = new MediaQuery('max-width: 76rem');
-	let toc = $state(1);
-	let navPinned = $state(false);
-	// option 5 puts the contents in the page, so back-to-top goes back to them instead
-	const backToContents = $derived(toc === 5 && narrow.current);
 	onMount(() => {
-		try {
-			const saved = Number(localStorage.getItem('toc-option'));
-			if (saved >= 1 && saved <= 5) toc = saved;
-		} catch {
-			// storage blocked: start on option 1
-		}
+		const foot = document.querySelector('footer.foot');
+		return onScrollFrame(() => {
+			const scrollable = document.documentElement.scrollHeight - innerHeight;
+			progress = scrollable > 0 ? Math.min(1, Math.max(0, scrollY / scrollable)) : 0;
+			deep = scrollY > innerHeight;
+			lift = foot ? Math.max(0, innerHeight - foot.getBoundingClientRect().top) : 0;
+		});
 	});
-	$effect(() => {
-		try {
-			localStorage.setItem('toc-option', String(toc));
-		} catch {
-			// storage blocked: the pick lasts until reload
-		}
-	});
-</script>
+	// the glide up is the reader's to stop: scrolling of their own cuts it short where it is and the
+	// page is theirs again, instead of being dragged on to the top
+	/** @type {(() => void) | undefined} */
+	let endGlide;
+	function toTop() {
+		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return scrollTo({ top: 0 });
+		endGlide?.();
+		scrollTo({ top: 0, behavior: 'smooth' });
+		const offInput = onUserScroll(() => {
+			endGlide?.();
+			scrollTo({ top: scrollY, behavior: 'instant' }); // a new scroll cancels the smooth one
+		});
+		const offEnd = on(window, 'scrollend', () => endGlide?.());
+		endGlide = () => {
+			offInput();
+			offEnd();
+			endGlide = undefined;
+		};
+	}
+	$effect(() => () => endGlide?.());
 
-<svelte:window onscroll={measureProgress} onresize={measureProgress} />
+	// what reader modes and search engines read for the title, author and date: the <title> carries
+	// the site name, so the bare title goes in og:title and all three in schema.org's BlogPosting
+	const ld = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'BlogPosting',
+		headline: title,
+		description,
+		datePublished: when.toISOString(),
+		author: author
+			? { '@type': 'Person', name: `@${author}`, url: `https://x.com/${author}` }
+			: undefined
+	}).replaceAll('<', '\\u003c');
+</script>
 
 <svelte:head>
 	<title>Speakrail · {title}</title>
 	{#if description}<meta name="description" content={description} />{/if}
+	<meta property="og:title" content={title} />
+	<meta property="og:type" content="article" />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own frontmatter, with < escaped -->
+	{@html `<script type="application/ld+json">${ld}</` + `script>`}
 </svelte:head>
 
 <div class="progress" style:--p={progress} aria-hidden="true"></div>
@@ -125,17 +129,14 @@
 	class:shown={deep}
 	style:--lift="{lift}px"
 	tabindex={deep ? 0 : -1}
-	aria-label={backToContents ? 'Back to contents' : 'Back to top'}
+	aria-label="Back to top"
 	data-jump
-	onclick={toTop}
-	>{#if backToContents}<List />{:else}<ArrowUp />{/if}</button
+	onclick={toTop}><ArrowUp /></button
 >
 
-<SiteNav bind:pinned={navPinned} />
+<SiteNav />
 
 <main class="post">
-	<TocPicker bind:value={toc} />
-
 	<header>
 		<p class="eyebrow">
 			<time datetime={when.toISOString()}
@@ -144,7 +145,7 @@
 			{#if author}
 				by
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external profile -->
-				<a class="handle" href="https://x.com/{author}"
+				<a class="handle" href="https://x.com/{author}" target="_blank" rel="author noreferrer"
 					><span class="xlogo"><XLogo /></span>@{author}</a
 				>
 			{/if}
@@ -153,10 +154,8 @@
 	</header>
 
 	{#if Top}
-		<div class="top"><Top /></div>
+		<div class="top"><Top {metadata} /></div>
 	{/if}
-
-	{#if toc === 5}<TocInline {reading} />{/if}
 
 	<div class="body">
 		<!-- the contents pin 24px below where the nav sits, so they stay put when it slides in -->
@@ -174,8 +173,11 @@
 					{#each Object.values(sources) as s (s.id)}
 						<li id="source-{s.id}">
 							<span class="bib-n">{s.n}</span>
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
-							<span>{s.authors} <a href={s.url}>{s.title}</a>. {s.venue}, {s.year}.</span>
+							<span>
+								{s.authors}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external source URL -->
+								<a href={s.url} target="_blank" rel="noreferrer">{s.title}</a>. {s.venue}, {s.year}.
+							</span>
 						</li>
 					{/each}
 				</ol>
@@ -208,15 +210,8 @@
 
 <CiteSheet bind:this={sheet} />
 
-{#if toc === 1}
-	<TocBar {reading} shown={navPinned} {lift} />
-{:else if toc === 2}
-	<TocTopBar {reading} mode="nav" {navPinned} />
-{:else if toc === 3}
-	<TocFab {reading} {lift} />
-{:else if toc === 4}
-	<TocTopBar {reading} mode="sticky" {navPinned} />
-{/if}
+<!-- narrow screens have no contents rail: a round button in the other corner opens them instead -->
+<TocFab {reading} {lift} />
 
 <style>
 	/* full-bleed figures (100vw) mustn't make the page scroll sideways */
@@ -424,6 +419,14 @@
 		   pin at (NAV_H + 24), so jumping to the first section doesn't leave them 8px low */
 		scroll-margin-top: calc(64px + var(--s5));
 	}
+	/* phones: less air around headings (64/32 → 48/28), still clearly more above than below so each
+	   heading stays with the text it introduces */
+	@media (max-width: 48rem) {
+		.prose :global(h2) {
+			margin-top: var(--s7);
+			margin-bottom: calc(var(--s5) + var(--s1));
+		}
+	}
 	.prose :global(figure) {
 		margin-block: var(--s6);
 	}
@@ -499,7 +502,7 @@
 	.bib-title {
 		margin: 0 0 var(--s3);
 		font: 400 var(--fs-caption) / 1.4 var(--font-mono);
-		color: var(--chart-grey);
+		color: var(--dim); /* --chart-grey is for graphics (3.6:1); text needs 4.5 */
 	}
 	.bibliography ol {
 		margin: 0;

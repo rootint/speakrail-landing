@@ -1,7 +1,7 @@
 // /llms.txt (https://llmstxt.org): a markdown map of the site for language models, built from the
 // post frontmatter so a new post shows up here on its own. Links are root-relative, which resolves
 // against this file's URL.
-import { posts } from '#lib/post/posts.js';
+import { posts } from '#lib/post/posts.server.js';
 import { MISSION } from '#lib/site.js';
 
 export const prerender = true;

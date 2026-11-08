@@ -1,13 +1,8 @@
 // What the reader is looking at: the post's sections and which one is current.
 // Create it in the page script (it hooks into mount); the contents rail reads it.
 import { onMount } from 'svelte';
-import { on } from 'svelte/events';
-
-const slug = (/** @type {string} */ s) =>
-	s
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-|-$/g, '');
+import { onScrollFrame } from './scroll-frame.js';
+import { slug } from './slug.js';
 
 export class Reading {
 	/** @type {{ id: string, text: string }[]} */
@@ -29,16 +24,10 @@ export class Reading {
 			);
 			this.sections = this.#headings.map((h) => {
 				const text = h.textContent?.trim() ?? '';
-				if (!h.id) h.id = slug(text);
+				if (!h.id) h.id = slug(text); // the build gives post headings theirs; this is for any other
 				return { id: h.id, text };
 			});
-			this.#spy();
-			const offScroll = on(window, 'scroll', () => this.#spy());
-			const offResize = on(window, 'resize', () => this.#spy());
-			return () => {
-				offScroll();
-				offResize();
-			};
+			return onScrollFrame(() => this.#spy());
 		});
 	}
 
