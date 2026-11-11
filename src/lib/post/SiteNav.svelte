@@ -1,7 +1,9 @@
 <!-- The site nav: "speak|rail" home on the left; the Hugging Face and GitHub logos and the theme
      switch (a sun in dark mode, a moon in light) on the right.
      From the top it scrolls away with the page; once it's gone, a scroll up pins it back in and a
-     scroll down slides it away. Jumps within the page (contents, citation numbers) don't bring it back. -->
+     scroll down slides it away. Jumps within the page (contents, citation numbers) don't bring it back.
+     `clear`: no background while the nav sits at the top of the page, for a page whose first thing
+     runs up behind it (the home page's drawing). Pinned further down, it is solid as usual. -->
 <script>
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
@@ -13,6 +15,9 @@
 	import { currentTheme, setTheme } from '#lib/theme.js';
 	import { onScrollFrame } from './scroll-frame.js';
 	import { onUserScroll } from './user-scroll.js';
+
+	/** @type {{ clear?: boolean }} */
+	let { clear = false } = $props();
 
 	// the page is prerendered without knowing the theme: both icons are in the HTML and CSS shows
 	// the right one, so this only has to be right for screen readers once the page is running
@@ -78,6 +83,7 @@
 <nav
 	class="site"
 	class:pinned
+	class:clear={clear && !pinned && off < NAV_H}
 	class:glide={off === NAV_H}
 	style:--nav-off={pinned ? 0 : off}
 	aria-label="Site"
@@ -124,6 +130,9 @@
 	   clicked (the theme switch) would hold the nav on screen */
 	.site:has(:focus-visible) {
 		transform: none;
+	}
+	.site.clear {
+		background: none;
 	}
 	.site.pinned {
 		box-shadow: inset 0 -1px 0 var(--grid);

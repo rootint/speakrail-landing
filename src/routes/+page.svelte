@@ -1,8 +1,10 @@
 <script>
 	import { resolve } from '$app/paths';
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
+	import MissionArt from '#lib/home/MissionArt.svelte';
 	import SiteFooter from '#lib/post/SiteFooter.svelte';
 	import SiteNav from '#lib/post/SiteNav.svelte';
+	import { splitLinks } from '#lib/post/inline-links.js';
 	import { MISSION, ORIGIN } from '#lib/site.js';
 
 	/** @type {{ data: { posts: import('#lib/post/posts.server.js').PostSummary[] } }} */
@@ -52,10 +54,17 @@
 </svelte:head>
 
 <div class="page">
-	<SiteNav />
+	<SiteNav clear />
+
+	<!-- outside the text column: the drawing runs the full width of the window, up behind the nav -->
+	<MissionArt />
 
 	<main class="home">
-		<p class="mission">{MISSION}</p>
+		<p class="mission">
+			{#each splitLinks(MISSION) as part, i (i)}{#if 'href' in part}<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link in the mission text -->
+					<a href={part.href} target="_blank" rel="noreferrer">{part.label}</a
+					>{:else}{part.text}{/if}{/each}
+		</p>
 
 		<section class="blog" aria-labelledby="blog-title">
 			<h2 id="blog-title">Blog</h2>
@@ -94,7 +103,7 @@
 	.home {
 		width: min(100% - 2 * var(--gutter), 43.5rem);
 		margin-inline: auto;
-		padding-block: var(--s8) var(--s9);
+		padding-block: 0 var(--s9); /* the drawing above brings its own space */
 	}
 	p {
 		margin: 0;

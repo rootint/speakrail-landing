@@ -1,4 +1,4 @@
-<!-- 14 · TL;DR as a pull quote: pink rule on the left (same as .prose blockquote), pink label, plain
+<!-- The TL;DR as a pull quote: pink rule on the left (same as .prose blockquote), pink label, plain
      body text. The text comes from the post's frontmatter (`tldr:`); without it, nothing renders.
      Links are written the markdown way, [text](https://…), and open in a new tab. -->
 <script>

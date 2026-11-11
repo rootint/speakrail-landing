@@ -1,4 +1,4 @@
-<!-- 14 · the big pink "Get on 🤗" button and a quiet arXiv link (the pills from 6) -->
+<!-- The big pink "Get on 🤗" button and a quiet arXiv link (the pills from 6) -->
 <script>
 	import ArrowUpRight from '~icons/iconoir/arrow-up-right';
 	import Page from '~icons/iconoir/page';
