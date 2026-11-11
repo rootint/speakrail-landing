@@ -7,5 +7,9 @@ Disallow: /voxtral-test$
 Disallow: /voxtral-variants$
 Disallow: /brand$
 Disallow: /logos$
+Disallow: /hero-variants$
+Disallow: /og/
 Disallow: /ru$
 Disallow: /ru/
+
+Sitemap: https://speakrail.com/sitemap.xml

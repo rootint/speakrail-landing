@@ -3,10 +3,32 @@
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
 	import SiteFooter from '#lib/post/SiteFooter.svelte';
 	import SiteNav from '#lib/post/SiteNav.svelte';
-	import { MISSION } from '#lib/site.js';
+	import { MISSION, ORIGIN } from '#lib/site.js';
 
 	/** @type {{ data: { posts: import('#lib/post/posts.server.js').PostSummary[] } }} */
 	let { data } = $props();
+
+	// what search results and link previews show for the home page
+	const DESCRIPTION =
+		'At Speakrail, we build local speech-to-speech pipelines that run entirely on your own GPU, plus research on turn-taking, latency and open speech models.';
+
+	// structured data: the site and the organisation behind it
+	const ld = JSON.stringify([
+		{
+			'@context': 'https://schema.org',
+			'@type': 'WebSite',
+			name: 'Speakrail',
+			url: `${ORIGIN}/`,
+			description: DESCRIPTION
+		},
+		{
+			'@context': 'https://schema.org',
+			'@type': 'Organization',
+			name: 'Speakrail',
+			url: `${ORIGIN}/`,
+			sameAs: ['https://github.com/speakrail', 'https://huggingface.co/speakrail']
+		}
+	]).replaceAll('<', '\\u003c');
 
 	const day = (/** @type {string} */ d) =>
 		new Date(d).toLocaleDateString('en-US', {
@@ -19,6 +41,14 @@
 
 <svelte:head>
 	<title>Speakrail</title>
+	<meta name="description" content={DESCRIPTION} />
+	<meta property="og:title" content="Speakrail" />
+	<meta property="og:description" content={DESCRIPTION} />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="{ORIGIN}/" />
+	<meta property="og:site_name" content="Speakrail" />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own constants, with < escaped -->
+	{@html `<script type="application/ld+json">${ld}</` + `script>`}
 </svelte:head>
 
 <div class="page">

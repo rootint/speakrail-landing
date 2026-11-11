@@ -6,6 +6,7 @@
 	import kripaLatin from '#lib/assets/fonts/kripa-latin.woff2';
 	import lilexLatin from '#lib/assets/fonts/lilex-latin.woff2';
 	import Toaster from '#lib/toast/Toaster.svelte';
+	import { ORIGIN } from '#lib/site.js';
 	import '../styles.css';
 
 	let { children } = $props();
@@ -29,6 +30,10 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<!-- this page's one true address: the bare domain plus the path, whatever host served it -->
+	{#if !page.url.pathname.startsWith('/ru')}
+		<link rel="canonical" href="{ORIGIN}{page.url.pathname}" />
+	{/if}
 	<link rel="preload" href={kripaLatin} as="font" type="font/woff2" crossorigin="anonymous" />
 	<link rel="preload" href={lilexLatin} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>

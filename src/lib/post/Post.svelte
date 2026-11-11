@@ -18,8 +18,12 @@
 	import SourceNotes from './SourceNotes.svelte';
 	import { onScrollFrame } from './scroll-frame.js';
 	import { defineSources } from './sources.js';
+	import { ORIGIN } from '#lib/site.js';
 	import TocFab from './toc/TocFab.svelte';
 	import { onUserScroll } from './user-scroll.js';
+
+	/** @type {Record<string, string>} every post's social preview card, by path */
+	const ogImages = import.meta.glob('/src/posts/*/og.png', { eager: true, import: 'default' });
 
 	/**
 	 * @typedef {{
@@ -28,6 +32,7 @@
 	 *   date: string,
 	 *   author?: string,
 	 *   tldr?: string,
+	 *   updated?: string,
 	 *   sources?: import('./sources.js').SourceInput[]
 	 * }} Metadata
 	 */
@@ -99,15 +104,26 @@
 
 	// what reader modes and search engines read for the title, author and date: the <title> carries
 	// the site name, so the bare title goes in og:title and all three in schema.org's BlogPosting
+	const url = `${ORIGIN}/${slug}`;
+	// the social preview card, if the post has one: src/posts/<slug>/og.png (made by `npm run og`)
+	const image = ogImages[`/src/posts/${slug}/og.png`];
+	const imageUrl = image ? new URL(image, ORIGIN).href : undefined;
+	// structured data for search engines: the article, who wrote it, who publishes it
 	const ld = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'BlogPosting',
 		headline: title,
 		description,
+		url,
+		mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+		image: imageUrl,
+		inLanguage: 'en',
 		datePublished: when.toISOString(),
+		dateModified: new Date(metadata.updated ?? date).toISOString(),
 		author: author
 			? { '@type': 'Person', name: `@${author}`, url: `https://x.com/${author}` }
-			: undefined
+			: undefined,
+		publisher: { '@type': 'Organization', name: 'Speakrail', url: ORIGIN }
 	}).replaceAll('<', '\\u003c');
 </script>
 
@@ -115,7 +131,22 @@
 	<title>{title}</title>
 	{#if description}<meta name="description" content={description} />{/if}
 	<meta property="og:title" content={title} />
+	{#if description}<meta property="og:description" content={description} />{/if}
 	<meta property="og:type" content="article" />
+	<meta property="og:url" content={url} />
+	<meta property="og:site_name" content="Speakrail" />
+	<meta property="article:published_time" content={when.toISOString()} />
+	{#if imageUrl}
+		<meta property="og:image" content={imageUrl} />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={title} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content={imageUrl} />
+	{:else}
+		<meta name="twitter:card" content="summary" />
+	{/if}
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- our own frontmatter, with < escaped -->
 	{@html `<script type="application/ld+json">${ld}</` + `script>`}
 </svelte:head>

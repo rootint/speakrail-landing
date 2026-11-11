@@ -3,9 +3,12 @@
      head reads, is pink, with a drop to the head below it. The field runs edge to edge across the
      text column. Deterministic, so the server and the browser draw the same dots. -->
 <script>
+	/** @type {{ rows?: number }} rows: fewer for a shorter strip (the social preview image) */
+	let { rows = 10 } = $props();
+
 	const W = 696; // the text column; the SVG scales with it
 	const COLS = 26;
-	const ROWS = 10;
+	const ROWS = rows; // read once: the dots are drawn once
 	const TAP = 11;
 	const R_MAX = 4.5; // the largest dot (1.5 + 3): the outer columns' centres sit this far in
 	const PITCH = (W - 2 * R_MAX) / (COLS - 1);
