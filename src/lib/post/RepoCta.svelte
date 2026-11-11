@@ -10,11 +10,11 @@
 	<div class="repo-text">
 		<p class="repo-title">Speakrail is open source</p>
 		<p class="repo-sub">
-			Clone it, run the whole pipeline on your own machine, and star it if it's useful.
+			Clone it, run it on your own machine, and leave feedback. Issues and PRs are welcome!
 		</p>
 	</div>
 	<a class="repo-go" href={REPO} target="_blank" rel="noreferrer"
-		><Github /> Star on GitHub <ArrowUpRight /></a
+		><Github /> Check on GitHub <ArrowUpRight /></a
 	>
 </aside>
 

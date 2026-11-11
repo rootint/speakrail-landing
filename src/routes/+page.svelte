@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import NavArrowRight from '~icons/iconoir/nav-arrow-right';
 	import MissionArt from '#lib/home/MissionArt.svelte';
+	import RepoCta from '#lib/post/RepoCta.svelte';
 	import SiteFooter from '#lib/post/SiteFooter.svelte';
 	import SiteNav from '#lib/post/SiteNav.svelte';
 	import { splitLinks } from '#lib/post/inline-links.js';
@@ -84,6 +85,9 @@
 				{/each}
 			</ol>
 		</section>
+
+		<!-- the same card that ends every post -->
+		<div class="repo"><RepoCta /></div>
 	</main>
 
 	<SiteFooter />
@@ -116,6 +120,9 @@
 
 	.blog {
 		margin-top: var(--s9);
+	}
+	.repo {
+		margin-top: var(--s8);
 	}
 	h2 {
 		margin: 0;
