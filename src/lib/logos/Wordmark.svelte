@@ -1,6 +1,5 @@
-<!-- The Speakrail wordmark (experiment 41 in Experiment.svelte): "speak" in full, "rail" quieter,
-     with a pink underline under the r, the letter being predicted right now. Its own component so the
-     nav and footer don't carry every experiment. Colours come from --fg / --acc / --bg. -->
+<!-- The Speakrail wordmark: "speak" in full, "rail" quieter, with a pink underline under the r, the
+     letter being predicted right now. Colours come from --fg / --acc / --bg. -->
 <script>
 	/** @type {{ size?: number }} */
 	let { size = 18 } = $props();

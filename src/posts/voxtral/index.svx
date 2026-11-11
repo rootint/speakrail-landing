@@ -100,7 +100,6 @@ sources:
   import DecoderTaps from './DecoderTaps.svelte';
   import SpeedupGantt from './SpeedupGantt.svelte';
   import DuplexCascade from './DuplexCascade.svelte';
-  import TimeoutDemo from './TimeoutDemo.svelte';
 </script>
 
 ## Why turn-taking is important

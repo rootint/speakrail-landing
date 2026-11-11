@@ -2,12 +2,7 @@
 User-agent: *
 Allow: /
 
-# design and test pages, and the /ru copies (English duplicates until there is a translation)
-Disallow: /voxtral-test$
-Disallow: /voxtral-variants$
-Disallow: /brand$
-Disallow: /logos$
-Disallow: /hero-variants$
+# the social preview cards, and the /ru copies (English duplicates until there is a translation)
 Disallow: /og/
 Disallow: /ru$
 Disallow: /ru/

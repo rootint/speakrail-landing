@@ -70,7 +70,6 @@
    Seeds: #161414 black, #fcf5f7 primary white, #f59eb9 primary pink.
    Every neutral is solved in OKLCH on the white's hue (H 358) for a target
    contrast, measured against --surface-2 (the lightest surface text sits on).
-   Only what the site uses; the rest of the kit is in src/lib/temp-kit.css.
    ===================================================================== */
 :root {
 	color-scheme: dark;
