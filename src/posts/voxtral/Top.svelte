@@ -1,8 +1,8 @@
-<!-- The section under the title: the model card and arXiv buttons, the pipeline animation, the TL;DR
+<!-- The section under the title: the model card and arXiv buttons, the decoder graphic, the TL;DR
      (its text is `tldr:` in index.svx's frontmatter). -->
 <script>
 	import CtaLinks from '#lib/blog-header/CtaLinks.svelte';
-	import Pipeline from '#lib/blog-header/Pipeline.svelte';
+	import DecoderDots from '#lib/blog-header/DecoderDots.svelte';
 	import Tldr from '#lib/blog-header/Tldr.svelte';
 
 	/** @type {{ metadata: { tldr?: string } }} */
@@ -10,5 +10,5 @@
 </script>
 
 <CtaLinks />
-<!-- <Pipeline /> -->
+<DecoderDots />
 <Tldr text={metadata.tldr} />

@@ -18,6 +18,7 @@
 	import { onMount } from 'svelte';
 	import Play from '~icons/iconoir/play-solid';
 	import Pause from '~icons/iconoir/pause-solid';
+	import { splitLinks, stripLinks } from '#lib/post/inline-links.js';
 
 	/**
 	 * @typedef {{ duration: number, step: number, user: number[], system: number[],
@@ -26,6 +27,8 @@
 
 	/** @type {{ demo: string, title: string, description?: string, span?: number }} */
 	let { demo, title, description = '', span } = $props();
+	// title and description may hold [label](url) links; labels and aria-labels get the plain text
+	const plainTitle = $derived(stripLinks(title));
 
 	const urls = /** @type {Record<string, string>} */ (
 		import.meta.glob('./demos/*.{webm,m4a}', { eager: true, query: '?url', import: 'default' })
@@ -119,19 +122,31 @@
 	}
 </script>
 
-<div class="demo" role="group" aria-label={title}>
+<div class="demo" role="group" aria-label={plainTitle}>
 	<div class="head">
 		<button
 			class="play"
 			type="button"
 			onclick={toggle}
-			aria-label="{paused ? 'Play' : 'Pause'}: {title}"
+			aria-label="{paused ? 'Play' : 'Pause'}: {plainTitle}"
 		>
 			{#if paused}<Play />{:else}<Pause />{/if}
 		</button>
 		<div class="caption">
-			<span class="title">{title}</span>
-			{#if description}<span class="desc">{description}</span>{/if}
+			<span class="title"
+				>{#each splitLinks(title) as part, i (i)}{#if 'href' in part}<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link --><a
+							href={part.href}
+							target="_blank"
+							rel="noreferrer">{part.label}</a
+						>{:else}{part.text}{/if}{/each}</span
+			>
+			{#if description}<span class="desc"
+					>{#each splitLinks(description) as part, i (i)}{#if 'href' in part}<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link --><a
+								href={part.href}
+								target="_blank"
+								rel="noreferrer">{part.label}</a
+							>{:else}{part.text}{/if}{/each}</span
+				>{/if}
 		</div>
 		<span class="clock">{clock(played)} / {clock(wave.duration)}</span>
 	</div>
@@ -159,7 +174,7 @@
 			bind:this={track}
 			role="slider"
 			tabindex="0"
-			aria-label="Seek: {title}"
+			aria-label="Seek: {plainTitle}"
 			aria-valuemin="0"
 			aria-valuemax={Math.round(wave.duration)}
 			aria-valuenow={Math.round(played)}

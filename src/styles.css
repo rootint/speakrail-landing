@@ -344,6 +344,7 @@ svg {
 .prose h3 {
 	font-size: var(--fs-h3);
 	margin-top: var(--s7);
+	margin-bottom: var(--s5); /* a step under h2's 32px, so the text below doesn't crowd it */
 }
 .prose h4 {
 	font-size: var(--fs-h4);
@@ -426,15 +427,17 @@ svg {
 	width: max-content;
 	max-width: 100%;
 	overflow-x: auto;
-	border-collapse: collapse;
+	/* separate, not collapse: a collapsed table can't round its cells' corners */
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: var(--fs-small);
 	line-height: 1.5;
 	font-variant-numeric: tabular-nums;
 }
 .prose th {
 	padding: var(--s3) var(--s4);
-	border-bottom: 1px solid var(--border);
 	font-weight: var(--w-ui-strong);
+	line-height: 1.4;
 	color: var(--muted);
 	white-space: nowrap;
 }
@@ -444,10 +447,17 @@ svg {
 }
 .prose td {
 	padding: var(--s3) var(--s4);
-	border-bottom: 1px solid var(--grid);
 }
-.prose tr:last-child td {
-	border-bottom: 0;
+/* zebra rows, no lines: every other row tinted, its outer ends rounded with --radius-sm so each
+   tinted row reads as one bar (the cells between stay square) */
+.prose tbody tr:nth-child(odd) td {
+	background: var(--surface-1);
+}
+.prose tbody tr:nth-child(odd) td:first-child {
+	border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+.prose tbody tr:nth-child(odd) td:last-child {
+	border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 /* small print under a table (what its * and ** mean) or under the audio demos:
    <p class="table-notes"> / <p class="demo-notes"> in the post */

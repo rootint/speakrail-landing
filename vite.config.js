@@ -30,6 +30,17 @@ export default defineConfig({
 						? undefined
 						: true
 			},
+			// Post components carry their CSS in the server-rendered HTML instead of a separate file.
+			// A post is imported lazily (src/routes/[slug]/+page.js), and SvelteKit only links a lazy
+			// import's stylesheet when the client and server builds name its chunk the same, which
+			// they don't for .svx posts. The page then painted unstyled until the JS arrived: every
+			// tooltip showing, headings' copy-links as plain blue links.
+			dynamicCompileOptions: ({ filename }) => {
+				const dirs = filename.split(/[/\\]/).join('/');
+				if (dirs.includes('/src/posts/') || dirs.includes('/src/lib/post/')) {
+					return { css: 'injected' };
+				}
+			},
 			adapter: adapter()
 		}),
 

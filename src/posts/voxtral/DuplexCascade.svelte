@@ -5,6 +5,8 @@
      scroll it sideways rather than shrink the text. Colours are theme tokens, so it follows the
      light/dark switch. -->
 <script>
+	import Cite from '#lib/post/Cite.svelte';
+
 	const W = 696;
 	const H = 468;
 
@@ -163,7 +165,7 @@
 		<svg
 			viewBox="0 0 {W} {H}"
 			role="img"
-			aria-label="DuplexCascade: a streaming ASR transcribes the user's audio; a buffer sends the words heard in each 0.6 second window to the LLM as a micro-turn; the LLM answers each micro-turn with special tokens such as System Backchannel or User finish speaking plus any reply text, which a streaming TTS speaks."
+			aria-label="DuplexCascade: a streaming ASR transcribes the user’s audio; a buffer sends the words heard in each 0.6 second window to the LLM as a micro-turn; the LLM answers each micro-turn with special tokens such as System Backchannel or User finish speaking plus any reply text, which a streaming TTS speaks."
 		>
 			<defs>
 				<marker
@@ -327,7 +329,10 @@
 	<figcaption>
 		DuplexCascade: every 0.6 s, the words heard so far reach the LLM as one micro-turn, and it
 		answers with special tokens (backchannel, keep listening, answer) plus any text for the TTS to
-		speak. Adapted from Yang et al., 2026.
+		speak. Adapted from
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
+		<a href="https://arxiv.org/abs/2603.09180" target="_blank" rel="noreferrer">Yang et al., 2026</a
+		>.<Cite id="duplexcascade" />
 	</figcaption>
 </figure>
 
@@ -335,7 +340,11 @@
 	/* phones: keep the text readable and scroll the drawing sideways instead */
 	.scroll {
 		overflow-x: auto;
-		scrollbar-width: thin;
+		overflow-y: hidden; /* sideways only: a scrolling x-axis otherwise makes y scroll too */
+		scrollbar-width: none; /* no bar: narrow screens swipe it, the fade on the right is the hint */
+	}
+	.scroll::-webkit-scrollbar {
+		display: none;
 	}
 	/* the drawing is wider than the column here: fade the right edge so it reads as "there's more" */
 	@media (max-width: 41rem) {

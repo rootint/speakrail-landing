@@ -1,11 +1,11 @@
 ---
-title: "Adapting ASR models for full-duplex speech-to-speech"
+title: "Adapting Voxtral Realtime for speech-to-speech pipelines"
 description: A small head on layer 11 of Voxtral Realtime's decoder predicts the end of your turn, with no loss in WER.
-date: 2026-11-09T08:37:00Z
+date: 2026-11-11T20:23:00Z
 author: danil_rootint
 # the TL;DR box under the title; '>-' lets it span lines, they join into one paragraph
 tldr: >-
-  It is possible to use the Voxtral Realtime for turn-taking in speech-to-speech pipelines by training a small MLP head onto its inner decoder layers. While keeping weights frozen, we achieved 0.872 recall at a 509ms latency on the TurnBench dev dataset. The weights are available on Hugging Face, and you can try this model alongside the entire voice pipeline using Speakrail.
+  We attached a small MLP to Voxtral Realtime, trained it to output turn ends on a single RTX 4090, and saved 767 ms on average in speech-to-speech pipelines compared to the naive approach. The model's weights were kept frozen, so the outputs are identical to the non-trained model. The weights are available on Hugging Face, and you can try this model alongside the entire voice pipeline using [Speakrail](https://github.com/speakrail/speakrail).
 sources:
   - id: moshi
     title: "Moshi: a speech-text foundation model for real-time dialogue"
@@ -67,6 +67,30 @@ sources:
     year: 2021
     venue: ASRU 2021
     url: https://arxiv.org/abs/2107.04734
+  - id: endpoint-anticipation
+    title: Endpoint Anticipation for Low-Latency Spoken Dialogue
+    authors: Udupa et al.
+    year: 2026
+    venue: arXiv:2606.13450
+    url: https://arxiv.org/abs/2606.13450
+  - id: turn-1-mini
+    title: turn-1-mini
+    authors: p99lab
+    year: 2026
+    venue: Hugging Face
+    url: https://huggingface.co/p99lab/turn-1-mini
+  - id: m5-ultra
+    title: "Apple 80-Core M5 Ultra: specs"
+    authors: HMC
+    year: 2026
+    venue: hmc-tech.com
+    url: https://hmc-tech.com/gpus/apple-80-core-m5-ultra
+  - id: rtx-4090
+    title: NVIDIA Ada GPU Architecture
+    authors: NVIDIA
+    year: 2022
+    venue: whitepaper
+    url: https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf
 ---
 
 <script>
@@ -81,7 +105,7 @@ sources:
 
 ## Why turn-taking is important
 
-Deciding when to take a turn is a crucial part of any speech-to-speech pipeline. Currently there are two approaches for building such pipelines – using a cascade of different models or picking a single unified <Term tip="The model listens and speaks at the same time, like a phone call, instead of taking strict turns like a walkie-talkie.">full-duplex</Term> model. Unified models, such as Moshi,<Cite id="moshi" /> are more natural conversationalists – they can handle speech overlaps and backchannels ("mm-hmm", "yeah", etc.), but they are difficult to train, requiring rare speech-to-speech data. The cascaded approach, on the other hand, is more flexible – you usually pick three models – an <Term tip="Automatic speech recognition: turns the user's speech into text.">ASR</Term> model, an <Term tip="Large language model: reads the transcript and writes the text of the reply.">LLM</Term>, and a <Term tip="Text-to-speech: turns the reply text back into audio.">TTS</Term> – and have a ready speech-to-speech pipeline in no time. Little to no training is required, and individual components can be replaced with newer ones as they become available. However, such cascaded approaches have two downsides – they usually suffer from higher latency (200 ms for Moshi compared to \~1 second of a cascaded pipeline<Cite id="chipchat" note="920 ms of latency was achieved on a highly-optimized pipeline on an Apple M2 Ultra." />) and they do not sound as natural in the conversation, since a lot of expressiveness is lost on the switch between modalities – the STT→LLM transition, for example, loses everything but text. Let's have a look at some examples:
+Deciding when to take a turn is a crucial part of any speech-to-speech pipeline. Currently there are two approaches for building such pipelines – using a cascade of different models or picking a single unified <Term tip="The model listens and speaks at the same time, like a phone call, instead of taking strict turns like a walkie-talkie.">full-duplex</Term> model. Unified models, such as Moshi,<Cite id="moshi" /> are more natural conversationalists – they can handle speech overlaps and backchannels (“mm-hmm,” “yeah,” etc.), but they are difficult to train, requiring rare speech-to-speech data. The cascaded approach, on the other hand, is more flexible: you usually pick three models (an <Term tip="Automatic speech recognition: turns the user’s speech into text.">ASR</Term> model, an <Term tip="Large language model: reads the transcript and writes the text of the reply.">LLM</Term> and a <Term tip="Text-to-speech: turns the reply text back into audio.">TTS</Term>) and have a ready speech-to-speech pipeline in no time. Little to no training is required, and individual components can be replaced with newer ones as they become available. However, such cascaded approaches have two downsides: they usually suffer from higher latency (200 ms for Moshi compared to \~1 second of a cascaded pipeline<Cite id="chipchat" note="920 ms of latency was achieved on a highly-optimized pipeline on an Apple M2 Ultra." />) and they do not sound as natural in the conversation, since a lot of expressiveness is lost on the switch between modalities – the STT→LLM transition, for example, loses everything but text. Let's have a look at some examples:
 
 <ConversationDemo
   demo="moshi"
@@ -91,12 +115,12 @@ Deciding when to take a turn is a crucial part of any speech-to-speech pipeline.
 
 <ConversationDemo
   demo="pipecat"
-  title="Cascaded (Pipecat)"
-  description="Here, the latency is more substantial, but the model is way smarter."
+  title="Cascaded ([Pipecat](https://github.com/pipecat-ai/pipecat))"
+  description="Here, the latency is more substantial, but the model is considerably smarter."
 />
 
 <p class="demo-notes">
-  Both were run on an RTX 4090. The cascaded approach is running on Voxtral Realtime, Gemma 4 12B and Pocket TTS. The cascaded approach provides more thoughful answers, has a better TTS and recognizes words better, but lacks interactivity – notice the interrupt on the "yeah" backchannel. For benchmarks on Moshi and how it fares against other models, visit <a href="https://artificialanalysis.ai/speech-to-speech" target="_blank" rel="noreferrer">Artificial Analysis</a>.
+  Both were run on an RTX 4090. The cascaded approach is running on <a href="https://huggingface.co/distil-whisper/distil-medium.en" target="_blank" rel="noreferrer">Whisper distil-medium.en</a>, <a href="https://huggingface.co/google/gemma-4-12B-it" target="_blank" rel="noreferrer">Gemma 4 12B</a> and <a href="https://github.com/kyutai-labs/pocket-tts" target="_blank" rel="noreferrer">Pocket TTS</a>. The cascaded approach provides more thoughtful answers, has a better TTS and recognizes words better, but lacks interactivity – notice the interruption on the “yeah” backchannel. For benchmarks on Moshi and how it fares against other models, visit <a href="https://artificialanalysis.ai/speech-to-speech" target="_blank" rel="noreferrer">Artificial Analysis</a>.
 </p>
 
 
@@ -109,59 +133,63 @@ We are focused on perfecting the cascaded approach and making it as natural as p
 
 <DuplexCascade />
 
-And in all such pipelines it is paramount to balance accuracy and speed very carefully – take a turn too quickly while the user is thinking mid-sentence, and your user gets furious that he was interrupted mid-thought by something like "It looks like your response was cut off, what did you mean?". Take a turn too slowly and you get unnatural response times, again, ruining user experience. Humans usually give replies in about 200 ms in a natural conversation.<Cite id="levinson-torreira" />
+And in all such pipelines it is paramount to balance accuracy and speed very carefully – take a turn too quickly while the user is thinking mid-sentence, and your user gets furious that they were interrupted mid-thought by something like “It looks like your response was cut off, what did you mean?” Take a turn too slowly and you get unnatural response times, again, ruining the user experience. Humans usually give replies in about 200 ms in a natural conversation.<Cite id="levinson-torreira" />
 
 ## Existing solutions
 
 Now that we know what turn-taking is, let's take a look at existing solutions. A popular benchmark for turn-taking models is [TurnBench](https://turnbench.sesame.com/) – we picked the open-source entries, added other turn detectors and a plain silence timeout, and tested them all on our data:
 
-**Turn-end detection on real speakrail conversations**
+**Turn-end detection on real Speakrail conversations**
 
-| Model | Turn ends caught\* | Response delay<br />(typical / slowest 10%) | Licence |
+| Model | Turn ends caught\* | Response delay<br />(typical / slowest 10%) | License |
 | --- | --- | --- | --- |
-| VoxTurn | 94% | 0.08 s / 0.4 s | CC-BY-NC |
-| MaAI VAP | 91% | 0.3 s / 1.0 s | MIT code; weights' licence not stated |
-| Smart Turn v3.2 | 91% | 0.8 s / 1.2 s | BSD-2 |
-| Silence timeout (Silero VAD) | 89% | 2.2 s / 2.3 s | MIT |
-| X2-Turn | 74% | 1.4 s / 3.3 s | Apache 2.0 (+ Mistral terms) |
-| turn-1-mini | 67% | 0.16 s / 1.2 s | Apache 2.0 |
-| LiveKit turn detector (text) | 66% | \~0.2 s\*\* | LiveKit model licence |
-| Parakeet realtime EOU | 58% | 2.2 s / 5.8 s | NVIDIA Open Model |
-| TEN Turn Detection (text) | 50% | \~0.2 s\*\* | Apache 2.0 |
+| [VoxTurn](https://huggingface.co/AustinXiao/voxturn) | 94% | 0.08 s / 0.4 s | CC-BY-NC |
+| [MaAI VAP](https://github.com/MaAI-Kyoto/MaAI) | 91% | 0.3 s / 1.0 s | MIT code; weights' license not stated |
+| [Smart Turn v3.2](https://huggingface.co/pipecat-ai/smart-turn-v3) | 91% | 0.8 s / 1.2 s | BSD-2 |
+| Silence timeout ([Silero VAD](https://github.com/snakers4/silero-vad)) | 89% | 2.2 s / 2.3 s | MIT |
+| [X2-Turn](https://huggingface.co/x-square-robot/X2-Turn-4B-0812) | 74% | 1.4 s / 3.3 s | Apache 2.0 |
+| [turn-1-mini](https://huggingface.co/p99lab/turn-1-mini) | 67% | 0.16 s / 1.2 s | Apache 2.0 |
+| [LiveKit turn detector](https://huggingface.co/livekit/turn-detector) (text) | 66% | \~0.2 s\*\* | LiveKit model license |
+| [Parakeet realtime EOU](https://huggingface.co/nvidia/parakeet_realtime_eou_120m-v1) | 58% | 2.2 s / 5.8 s | NVIDIA Open Model |
+| [TEN Turn Detection](https://huggingface.co/TEN-framework/TEN_Turn_Detection) (text) | 50% | \~0.2 s\*\* | Apache 2.0 |
 
 <p class="table-notes">
   * Share of finished turns the model responds to, while interrupting the user on at most 5% of mid-sentence pauses. Delay is measured from the user’s last word.<br />
   ** Text-only models were given an assumed 0.2 s for the transcript to arrive.
 </p>
 
+Out of those approaches, X2-Turn and Parakeet realtime EOU also output text tokens, while the others just output turn probabilities. We consider making the ASR model output turn probabilities alongside the text the most suitable approach in speech-to-speech because this simplifies the pipeline and doesn't need an external model.
+
 ## Our approach
 
-Our main idea was to train a turn-taking head to an ASR model to decide when to release turns – this allows us to tap into the powerful acoustic and semantic features that the model was previously trained on. As our ASR we chose the Voxtral Realtime<Cite id="voxtral-realtime" /> model, since it shows the best performance among all open-source streaming models we found, both on [public tests](https://artificialanalysis.ai/speech-to-text/streaming) and on our benchmarks. Here are the results of our benchmarks:
+### Turn-taking head
 
-**Errors on real speakrail conversations**
+Our main idea was to attach a turn-taking head to an ASR model to decide when to release turns – this allows us to tap into the powerful acoustic and semantic features that the model was previously trained on. As our ASR, we chose the [Voxtral Realtime](https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602)<Cite id="voxtral-realtime" /> model, since it shows the best performance among all open-source streaming models we found, both on [public tests](https://artificialanalysis.ai/speech-to-text/streaming) and on our benchmarks. Here are the results of our benchmarks:
+
+**Errors on real Speakrail conversations**
 
 | System | Meaning-changing errors per turn\* | How it ran |
 | --- | --- | --- |
-| **Voxtral Realtime** | **5.3%** | live streaming, 480 ms delay |
-| Qwen3-ASR 1.7B | 8.1% | offline |
-| Whisper large-v3 | 12.0% | offline |
-| Parakeet TDT v3 | 14.3% | offline |
-| Nemotron streaming-en 0.6B | 16.9% | streaming, 560 ms |
-| Kyutai STT 2.6B | 21.5% | offline |
-| Nemotron 3.5 0.6B | 27.3% | streaming, 560 ms |
-| Kyutai STT 1B | 29.6% | offline |
-| Moonshine v2 Medium (245M) | 34.2% | offline, whole clips, batched |
-| Gemma 4 audio (E4B / E2B / 12B) | 40–44% | offline |
+| **[Voxtral Realtime](https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602)** | **5.3%** | live streaming, 480 ms delay |
+| [Qwen3-ASR 1.7B](https://huggingface.co/Qwen/Qwen3-ASR-1.7B) | 8.1% | offline |
+| [Whisper large-v3](https://huggingface.co/openai/whisper-large-v3) | 12.0% | offline |
+| [Parakeet TDT v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) | 14.3% | offline |
+| [Nemotron streaming-en 0.6B](https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b) | 16.9% | streaming, 560 ms |
+| [Kyutai STT 2.6B](https://huggingface.co/kyutai/stt-2.6b-en) | 21.5% | offline |
+| [Nemotron 3.5 0.6B](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) | 27.3% | streaming, 560 ms |
+| [Kyutai STT 1B](https://huggingface.co/kyutai/stt-1b-en_fr) | 29.6% | offline |
+| [Moonshine v2 Medium](https://huggingface.co/moonshine-ai/moonshine-streaming-medium) (245M) | 34.2% | offline, whole clips, batched |
+| Gemma 4 audio ([E4B](https://huggingface.co/google/gemma-4-E4B-it) / [E2B](https://huggingface.co/google/gemma-4-E2B-it) / [12B](https://huggingface.co/google/gemma-4-12B-it)) | 40–44% | offline |
 
 <p class="table-notes">
-  * Meaning-changing errors per turn is an LLM judged-metric that inspects the transcripts and decides whether the meaning was altered or not. Claude Opus 5.5 was used as a judge.
+  * Meaning-changing errors per turn is an LLM-judged metric that inspects the transcripts and decides whether the meaning was altered or not. Claude Opus 5.5 was used as a judge.
 </p>
 
-Good, the ASR model is selected, now we need to decide how exactly a turn-taking head should be attached to the model. **Our hypothesis: since the Voxtral model is capable of outputting punctuation, it should have an idea of <Term tip="The melody and rhythm of speech: pitch, loudness, pauses and timing. It is how a listener hears that a sentence is finished, or isn't.">prosody</Term> and semantics, so, in theory, weights can be frozen and a turn-taking head can be attached directly onto the hidden states and trained to get information from them.** Keeping weights frozen would keep <Term tip="Word error rate: the share of words an ASR model gets wrong (swapped, dropped or added) against a reference transcript. Lower is better.">WER</Term> as is, and ensure that the model doesn't catastrophically forget everything that it learned before – it was never trained to output turn-taking probabilities after all. Furthermore, such an approach allows us to use datasets that don't have text as output (Smart Turn v3.2, for example). Another hypothesis is that the most useful information would lie somewhere in the middle of the decoder: in decoder-only language models, intermediate layers often carry richer representations than the last one, which specializes in predicting the next token.<Cite id="skean" note="Across decoder-only language models, intermediate layers consistently give stronger features for downstream tasks than the final layer." /> Layers closer to the input, in turn, stay closer to the acoustics.<Cite id="pasad" note="In wav2vec 2.0, information climbs from acoustic features in the lowest layers to phones, word identity and word meaning higher up." />
+Good, the ASR model is selected. Now we need to decide how exactly a turn-taking head should be attached to the model. **Our hypothesis: since the Voxtral model is capable of outputting punctuation, it should have an idea of <Term tip="The melody and rhythm of speech: pitch, loudness, pauses and timing. It is how a listener hears that a sentence is finished, or isn’t.">prosody</Term> and semantics, so, in theory, weights can be frozen and a turn-taking head can be attached directly onto the hidden states and trained to get information from them.** Keeping weights frozen would keep <Term tip="Word error rate: the share of words an ASR model gets wrong (swapped, dropped or added) against a reference transcript. Lower is better.">WER</Term> as is and ensure that the model doesn't catastrophically forget everything that it learned before – it was never trained to output turn-taking probabilities, after all. This approach is similar to the one used in X2-Turn.<Cite id="x2-turn" /> However, they do a full fine-tune run and extract turn-taking probabilities from the final layer, while we keep the weights frozen and rely on a separate head. Furthermore, such an approach allows us to use datasets that don't have text as output ([Smart Turn v3.1](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train), for example). Another hypothesis is that the most useful information would lie somewhere in the middle of the decoder: in decoder-only language models, intermediate layers often carry richer representations than the last one, which specializes in predicting the next token.<Cite id="skean" note="Across decoder-only language models, intermediate layers consistently give stronger features for downstream tasks than the final layer." /> Layers closer to the input, in turn, stay closer to the acoustics.<Cite id="pasad" note="In wav2vec 2.0, information climbs from acoustic features in the lowest layers to phones, word identity and word meaning higher up." />
 
 <DecoderTaps />
 
-Let's check our hypotheses, starting with the place to tap into. We picked 2,000 clips from Smart Turn at random, saved decoder outputs from multiple layers and then trained small linear probes that output simple complete / incomplete probabilities. Complete probability means that the phrase is complete and that we can ask the LLM to "say" something, and incomplete means that the user has probably paused mid-sentence to think. Here are the results of this experiment:
+Let's check our hypotheses, starting with the place to tap into. We picked 2,000 clips from [Smart Turn](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) at random, saved hidden states from multiple layers and then trained small linear probes that output simple complete / incomplete probabilities. Complete probability means that the phrase is complete and that we can ask the LLM to "say" something, and incomplete means that the user has probably paused mid-sentence to think. Here are the results of this experiment:
 
 **Where the turn-taking information lives in Voxtral's decoder**
 
@@ -177,9 +205,9 @@ Let's check our hypotheses, starting with the place to tap into. We picked 2,000
   * A linear probe per layer, trained on 1,603 clips and tested on the 397 held-out clips. Accuracy is averaged over 0.5–1 s after the user stops speaking, which is when Voxtral emits the last word.
 </p>
 
-Our hypothesis held up: the most useful information sits in the middle layers. We expected a bigger gap, honestly, but the result was clear enough, so we chose layer 11 as the input for the turn-taking head.
+Our hypothesis held up: the most useful information sits in the middle layers. We expected a bigger gap, honestly. Still, layer 11 came out on top, so we chose it as the input for the turn-taking head.
 
-To choose the classifier, we took a 19,700 clip subset from the [Smart Turn v3.1 training set](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train). We ran them through a frozen Voxtral Realtime model using the transformers package and saved the hidden states of layers 11, 17 and the output layer, for the frames around the end of each utterance. Here is the comparison table on the cached hidden states:
+To choose the classifier, we took a 19,700-clip subset from the [Smart Turn v3.1 training set](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train). We ran those clips through a frozen Voxtral Realtime model using the transformers package and saved the hidden states of layer 11 for the frames around the end of each utterance. We also did a LoRA tune on the last layers for comparison. Here is the comparison table on the cached hidden states:
 
 **Candidates we tried**
 
@@ -187,12 +215,12 @@ To choose the classifier, we took a 19,700 clip subset from the [Smart Turn v3.1
 | --- | --- | --- | --- | --- |
 | Linear probe | 15k | layer 11 | 0.951 / 0.948 / 0.928 | 5.7% |
 | MLP, 768 hidden | 2.4M | layer 11 | 0.963 / 0.963 / 0.944 | 5.2% |
-| GRU, 512 | 6.3M | layers 11 + 17 + output | 0.971 / 0.971 / 0.954 | 2.9% |
+| GRU, 512 | 3.2M | layer 11 | 0.972 / 0.971 / 0.959 | 2.8% |
 | LoRA rank 16 on Voxtral's top layers 18–25, plus a linear head | 2.9M | layer 17 | 0.964 / 0.964 / 0.949 | 3.4% |
 
-All classifiers show very similar performance on the TurnBench datasets, however, when we tested the performance on the CANDOR dataset, we saw that the simple MLP on layer 11 was better on catching real turn ends, missing only on backchannels.
+All classifiers perform similarly on a held-out part of the [Smart Turn](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) dataset. On the [CANDOR](https://www.betterup.com/research/candor-research) dataset, however, the MLP was substantially better at deciding when the turn is over, which we consider more important than backchannel accuracy:
 
-**The same heads on CANDOR, a different domain**
+**The same heads on CANDOR, different domain**
 
 | Head | CANDOR turn ends caught (119) | Typical delay | Cut in on mid-turn pauses | Took the floor on a backchannel |
 | --- | --- | --- | --- | --- |
@@ -201,37 +229,61 @@ All classifiers show very similar performance on the TurnBench datasets, however
 | GRU, layer 11 | 37% | 0.14 s | 13% | 2% |
 | LoRA, top layers | 25% | 0.15 s | 10% | 0% |
 
-After picking the layer-11 MLP, we trained the it on a subset of the OpenYap dataset and the entire SmartTurn train dataset. We ran the model on an RTX 4090, collecting the layer-11 activations, and then trained the MLP on those activations. The backchannel performance was also improved, since OpenYap had more backchannel examples than SmartTurn. After training, we got the best result on the speakrail audios:
-
-**Turn-end detection on real speakrail conversations**
-
-| Model | Turn ends caught\* | Response delay<br />(typical / slowest 10%) | Licence |
-| --- | --- | --- | --- |
-| **Speakrail Voxtral** | 96% | 0.08 s / 0.3 s | Apache 2.0 |
-| VoxTurn | 94% | 0.08 s / 0.4 s | CC-BY-NC |
-| MaAI VAP | 91% | 0.3 s / 1.0 s | MIT code; weights' licence not stated |
-| Smart Turn v3.2 | 91% | 0.8 s / 1.2 s | BSD-2 |
-| ... | ... | ... | ... |
-
-Submission to the TurnBench table is coming soon.
+So, we decided to pick the layer-11 MLP, and selected the entire [Smart Turn 3.1 train set](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) and a 100-hour [OpenYap](https://huggingface.co/datasets/TheAgenticDataCompany/open-yap-1k) subset for training.
+We ran the model on an RTX 4090, collecting the layer-11 activations, and then trained the MLP on those activations. The backchannel performance also improved, since the [OpenYap](https://huggingface.co/datasets/TheAgenticDataCompany/open-yap-1k) dataset contained more backchannel samples than the [Smart Turn](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) dataset.
 
 ### Speeding up Voxtral
 
-Great, the model now can tell the LLM when to take a turn. However, Voxtral is very slow -- it shows the best WER tradeoff at 480ms after the end of word (source), and its end of word trails a VAD mark by another 100-200ms, raising the total delay to 680ms. Changing the latency to something less than 480ms will increase the error rate and make the model more prone to missing words. However, we can improve latency thanks to the turn-taking head we just trained. The turn-taking head outputs end-of-turn probabilities every Voxtral frame, that is 80ms, and it is not using the same delay-conditioning as the decoder does when outputting the words. This means that, knowing that a turn is over, we can push empty audio chunks and force a faster than realtime computation to cut down the end-of-turn latency. The RTX 4090 running the Voxtral model through the audio.cpp backend allows to run the model 6 times faster than realtime, which means that we can theoretically cut end of word latency from 480ms to just 80ms. Here are some Gantt charts for easier understanding of the concept:
+Great, the LLM now knows when to take a turn, but at the time of the turn release the Voxtral model hasn't produced all the words yet. Voxtral Realtime has a delay setting<Cite id="voxtral-realtime" note="The target delay can be anything from 80 ms to 2.4 s, in 80 ms steps, and is chosen at inference time." /> that controls how far behind the audio the words are emitted. The optimal value is 480 ms,<Cite id="voxtral-realtime" note="Average WER on English speech: 9.95% at a 240 ms delay, 8.47% at 480 ms, 7.94% at 960 ms. At 480 ms the model approaches the accuracy of Scribe v2 Realtime." /> but Voxtral itself trails the actual end of turn by another ~150 ms, raising the total delay to ~630 ms. However, we can improve latency using the turn-taking head we just trained – it outputs the end-of-turn probabilities every Voxtral frame (that is, every 80 ms), and it doesn't depend on the delay setting. **This means that, knowing that a turn is over, we can push empty audio chunks and force a faster-than-real-time computation to cut down the end-of-turn latency – we call this “peek.”** The RTX 4090 running the Voxtral model through the [audio.cpp](https://github.com/0xShug0/audio.cpp) backend lets us run the model 6 times faster than real time, which means that we can theoretically cut end-of-word latency from 480 ms to just 80 ms. The reader might recognize this idea, and indeed a similar approach can be seen in [Unmute](https://github.com/kyutai-labs/unmute) by Kyutai.<Cite id="kyutai-stt" note="Kyutai calls it the “flush trick”: when Unmute detects the end of speech, it asks the speech-to-text server to process the audio already sent as fast as it can, faster than real time." /> The difference between those two approaches is that Unmute starts "looking into the future" when the model outputs that the turn is over, while we do that when the turn head is not sure yet – this saves latency for some extra compute. Let's have a look at some charts – this concept is easier to explain using pictures rather than words:
 
 <SpeedupGantt />
 
-Lastly, as you can see on the Gantt charts, there is a gap between the actual end of word and when Voxtral thinks there is the end of word, so we add a small sigmoid output to the head and ask it to output probabilities that the phrase will end 80ms/160ms/240ms from the current timestamp. This idea didn't help much in terms of latency, saving only 60-70ms.
+But we can make <Term tip="Time to first audio: how long after you stop talking the first sound of the reply starts playing.">TTFA</Term> even faster by trying to anticipate when the turn will be over, Endpoint Anticipation style.<Cite id="endpoint-anticipation" note="Integrated into Unmute with a 960 ms horizon, average latency drops from 1195 ms to 690 ms, at the cost of 28.4% more speculative computation." /> The Endpoint Anticipation authors claim that their approach achieves a reduction of 505 ms on average response latency at a 960 ms prediction horizon. In practice, we didn't find such long horizons useful. When we gave Gemma 4 12B the [Smart Turn](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) requests cut 960 ms before the end, it answered wrongly 54% of the time. Taking that into account, we tried shorter horizons instead. Since Voxtral outputs the ends of words 100–200 ms after they actually happened, we can try to rely on acoustic information in the decoder and start the peek earlier. Hence, we added 3 more sigmoid outputs to our turn-taking head that output probabilities that the turn is over within the next 80 ms, 160 ms and 240 ms. We picked those values because a peek further than 240 ms ahead gets the user’s final words right less than 22% of the time. After training the model, we needed to pick a trigger point, and after experimenting with the thresholds, we decided to use the 160 ms output at a 0.7 probability. This yielded 76% of correct final words. Let's now have a look at the Gantt chart with all the optimizations described above:
+
+<SpeedupGantt show={[4]} caption={false} />
+
+
 
 ## Results
 
+First and foremost, thanks to frozen weights, the output of the model is unchanged – while using audio.cpp, the Speakrail and base Voxtral returned bit-identical outputs. The head itself costs just 0.02 ms on audio.cpp and consists of 2.4M parameters. Standalone detectors are larger (for example, Smart Turn v3 at ~8M and turn-1-mini at 6.1M) and still need their own ASR next to them. Let's have a look at turn-taking detection accuracy (same table as in [Existing solutions](#existing-solutions)):
 
-First and foremost, Voxtral retained its WER, since the weights were frozen. While using audio.cpp, the Speakrail and base Voxtral returned bit-identical outputs in both engines. The head itself costs just 0.02ms on audio.cpp and consists of just 2M parameters. Secondly, the peek functionality gets 80% of turn releases right, leaving just 20% of redundant compute for an average of 500ms of saved turn-release latency.
+**Turn-end detection on real Speakrail conversations**
+
+| Model | Turn ends caught\* | Response delay<br />(typical / slowest 10%) | License |
+| --- | --- | --- | --- |
+| **[Speakrail Voxtral](https://huggingface.co/speakrail/speakrail-voxtral-realtime-2602-turnhead-2611)** | 96% | 0.08 s / 0.3 s | Apache 2.0 |
+| [VoxTurn](https://huggingface.co/AustinXiao/voxturn) | 94% | 0.08 s / 0.4 s | CC-BY-NC |
+| [MaAI VAP](https://github.com/MaAI-Kyoto/MaAI) | 91% | 0.3 s / 1.0 s | MIT code; weights' license not stated |
+| [Smart Turn v3.2](https://huggingface.co/pipecat-ai/smart-turn-v3)<Cite id="smart-turn" /> | 91% | 0.8 s / 1.2 s | BSD-2 |
+| Silence timeout ([Silero VAD](https://github.com/snakers4/silero-vad)) | 89% | 2.2 s / 2.3 s | MIT |
+| [X2-Turn](https://huggingface.co/x-square-robot/X2-Turn-4B-0812) | 74% | 1.4 s / 3.3 s | Apache 2.0 |
+| [turn-1-mini](https://huggingface.co/p99lab/turn-1-mini)<Cite id="turn-1-mini" /> | 67% | 0.16 s / 1.2 s | Apache 2.0 |
+| [LiveKit turn detector](https://huggingface.co/livekit/turn-detector) (text) | 66% | \~0.2 s\*\* | LiveKit model license |
+| [Parakeet realtime EOU](https://huggingface.co/nvidia/parakeet_realtime_eou_120m-v1) | 58% | 2.2 s / 5.8 s | NVIDIA Open Model |
+| [TEN Turn Detection](https://huggingface.co/TEN-framework/TEN_Turn_Detection) (text) | 50% | \~0.2 s\*\* | Apache 2.0 |
+
+<p class="table-notes">
+  * Share of finished turns the model responds to, while interrupting the user on at most 5% of mid-sentence pauses. Delay is measured from the user’s last word.<br />
+  ** Text-only models were given an assumed 0.2 s for the transcript to arrive.
+</p>
+
+The turn head lets the pipeline take turns 767 ms earlier than a naive approach, and comparing our approach to the Unmute flush functionality on the same models yields a 308 ms improvement. Let's have a look at the compute table:
+
+**Compute cost relative to the naive approach**
+
+| Setup | ASR compute | LLM decision calls | Reply generation + TTS |
+| --- | --- | --- | --- |
+| naive approach (chart 1) | 1.00× | 1.00× | 1.00× |
+| Unmute-style flush (chart 2) | 1.04× | 1.00× | 1.00× |
+| **"Peek" on a copy + speculate at P ≥ 0.5 (chart 3)** | **1.07×** | **1.52×** | **1.10×** |
+| **+ anticipation at 160 ms (chart 4)** | **1.13×** | **1.81×** | **1.24×** |
+
+The anticipation approach turned out to be quite expensive in compute, but mostly it trades idle GPU time for lower latency. With more concurrent clients there is no idle time left to trade, and anticipation can end up making latency worse.
 
 ## Limitations and future work
 
-First of all, more data can be used to make the pipeline more robust - there is the oto-speech dataset and there is the full set of OpenYap. Furthermore, the turn-taking head is currently most suited for assistant-like work, and in general human-like chit-chatting, it can misinterpret mid-sentence pauses and trigger a turn release. Furthermore, this approach should generalize to other frame-synchronous ASR, such as Nemotron Streaming, however this hypothesis has to be thoroughly checked because the Nemotron model doesn't have the LLM decoder that Voxtral has.
-
+First of all, we could have used more data to train the model (e.g., using the [otoSpeech](https://huggingface.co/otoearth) datasets). Furthermore, we noticed that the turn-taking head behaves worse on person-to-person chit-chat dialogues, and better on assistant-like data. That might be because the [Smart Turn](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.1-train) dataset had substantially more clips than the [OpenYap](https://huggingface.co/datasets/TheAgenticDataCompany/open-yap-1k) dataset. Limitations of the anticipation head must also be noted, as such actions require significantly more compute, and such approaches can't be used on low-compute systems or in multi-user deployments. For example, the Speakrail package disables the anticipation on Macs, because there is not much compute that can be traded for latency: even the top 80-core M5 Ultra GPU peaks at an estimated 33 FP32 TFLOPS,<Cite id="m5-ultra" note="Apple publishes no FLOPS figures; this third-party estimate comes from the GPU’s 10,240 shaders at 1.62 GHz." /> against the RTX 4090’s 82.6.<Cite id="rtx-4090" note="Peak FP32 throughput without tensor cores. With tensor cores, FP16 with FP32 accumulate reaches 165.2 TFLOPS." /> We reckon that our turn-taking head approach should generalize to other frame-synchronous ASR, such as [Nemotron Streaming](https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b). This still has to be checked, though: unlike Voxtral, Nemotron has no LLM decoder.
 
 ## Deployment
-To test the turn-taking head in your environment, you can use our fork of the [audio.cpp](https://github.com/speakrail/audio.cpp/tree/turn-head-2611) repository together with the [HF repository](https://huggingface.co/speakrail/speakrail-voxtral-realtime-2602-turnhead-2611) for the latest trained turn-taking head checkpoint. However, you can try the Voxtral model in [Speakrail](https://github.com/speakrail/speakrail) – our open-source full-duplex speech-to-speech pipeline that uses this Voxtral model in action. Feel free to leave pull requests and open issues there.
+To test the turn-taking head in your environment, you can use our fork of the [audio.cpp](https://github.com/speakrail/audio.cpp/tree/turn-head-2611) repository together with the [HF repository](https://huggingface.co/speakrail/speakrail-voxtral-realtime-2602-turnhead-2611) for the latest trained turn-taking head checkpoint. To try it together with the rest of the pipeline, use [Speakrail](https://github.com/speakrail/speakrail) – our open-source full-duplex speech-to-speech pipeline. Feel free to leave pull requests and open issues there.

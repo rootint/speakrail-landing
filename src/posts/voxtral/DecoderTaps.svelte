@@ -40,7 +40,7 @@
 		<svg
 			viewBox="0 0 {W} {H}"
 			role="img"
-			aria-label="A schematic of the Voxtral's decoder – the audio encoder feeds 26 decoder layers with a final norm at the end. We picker layers 0, 4, 11, 17 and the final norm for probing. Layers on the left are more acoustic, while layers on the right are more semantic."
+			aria-label="A schematic of Voxtral’s decoder – the audio encoder feeds 26 decoder layers with a final norm at the end. We picked layers 0, 4, 11, 17 and the final norm for probing. Layers on the left are more acoustic, while layers on the right are more semantic."
 		>
 			<defs>
 				<marker
@@ -147,7 +147,9 @@
 		</svg>
 	</div>
 	<figcaption>
-	A schematic of the Voxtral's decoder – the audio encoder feeds 26 decoder layers with a final norm at the end. We picked layers 0, 4, 11, 17 and the final norm for probing. Layers on the left are more acoustic, while layers on the right are more semantic.
+		A schematic of Voxtral’s decoder – the audio encoder feeds 26 decoder layers with a final norm
+		at the end. We picked layers 0, 4, 11, 17 and the final norm for probing. Layers on the left are
+		more acoustic, while layers on the right are more semantic.
 	</figcaption>
 </figure>
 
@@ -155,7 +157,11 @@
 	/* phones: keep the text readable and scroll the drawing sideways instead */
 	.scroll {
 		overflow-x: auto;
-		scrollbar-width: thin;
+		overflow-y: hidden; /* sideways only: a scrolling x-axis otherwise makes y scroll too */
+		scrollbar-width: none; /* no bar: narrow screens swipe it, the fade on the right is the hint */
+	}
+	.scroll::-webkit-scrollbar {
+		display: none;
 	}
 	@media (max-width: 41rem) {
 		.scroll {
